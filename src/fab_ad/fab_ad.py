@@ -10,12 +10,12 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from typing import Iterable, Union, Type
 from numbers import Number
 
-from constants import _ALLOWED_TYPES, _SPECIAL_FUNCTIONS
+from constants import _ALLOWED_TYPES, _SPECIAL_FUNCTIONS, AdMode
 
 
 class FabTensor(object):
 
-    def __init__(self, value, derivative=None, identifier=""):
+    def __init__(self, value, derivative=None, identifier="", mode="forward", source=[]):
         """init method
 
         Parameters
@@ -35,6 +35,25 @@ class FabTensor(object):
             derivative = [derivative]
         self.derivative = np.array(derivative)
         self.identifier = identifier
+
+        # attributes for reverse mode
+        assert mode in [AdMode.FORWARD, AdMode.REVERSE]
+        self.mode = mode
+        self.source = source
+        self._reverse_mode_gradient = None
+
+    @property
+    def gradient(self):
+        if self._reverse_mode_gradient is None:
+            raise ValueError("Gradients not initialized yet. Run reverse mode AD to compute gradients!")
+        return self._reverse_mode_gradient
+
+    @gradient.setter
+    def gradient(self, value):
+        self._reverse_mode_gradient = value
+
+    def compute_reverse_mode_gradient(self):
+        return sum((weight * child.gradient for child, weight in self.source))
 
     def __repr__(self):
         """Represents the FabTensor as a string
@@ -69,9 +88,9 @@ class FabTensor(object):
             if value attribute of two `FabTensor` objects are equal
         """
         if isinstance(other, FabTensor):
-            return other.value == self.value
+            return self.value == other.value
         elif isinstance(other, _ALLOWED_TYPES):
-            return other == self.value
+            return self.value == other
         else:
             raise TypeError(f"Cannot compare FabTensor and object of type {type(other)}")
 
@@ -90,9 +109,9 @@ class FabTensor(object):
         
         """
         if isinstance(other, FabTensor):
-            return other.value != self.value
+            return self.value != other.value
         elif isinstance(other, _ALLOWED_TYPES):
-            return other != self.value
+            return self.value != other
         else:
             raise TypeError(f"Cannot compare FabTensor and object of type {type(other)}")
 
@@ -214,9 +233,24 @@ class FabTensor(object):
         
         """
         if isinstance(other, FabTensor):
-            return FabTensor(self.value + other.value, derivative=self.derivative + other.derivative, identifier=f'{self.identifier} + {other.identifier}')
+            return FabTensor(
+                self.value + other.value,
+                derivative=self.derivative + other.derivative,
+                identifier=f'{self.identifier} + {other.identifier}',
+                mode=self.mode,
+                source=[
+                    (self, 1),
+                    (other, 1)
+                ])
         elif isinstance(other, _ALLOWED_TYPES):
-            return FabTensor(self.value + other, derivative=self.derivative, identifier=f'{self.identifier} + {other}')
+            return FabTensor(
+                self.value + other,
+                derivative=self.derivative,
+                identifier=f'{self.identifier} + {other}',
+                mode=self.mode,
+                source=[
+                    (self, 1),
+                ])
         else:
             raise TypeError(f"addition not supported between types FabTensor and {type(other)}")
 
@@ -234,9 +268,24 @@ class FabTensor(object):
         
         """
         if isinstance(other, FabTensor):
-            return FabTensor(self.value + other.value, derivative=self.derivative + other.derivative, identifier=f'{other.identifier} + {self.identifier}')
+            return FabTensor(
+                self.value + other.value,
+                derivative=self.derivative + other.derivative,
+                identifier=f'{other.identifier} + {self.identifier}',
+                mode=self.mode,
+                source=[
+                    (self, 1),
+                    (other, 1),
+                ])
         elif isinstance(other, _ALLOWED_TYPES):
-            return FabTensor(self.value + other, derivative=self.derivative, identifier=f'{other} + {self.identifier}')
+            return FabTensor(
+                self.value + other,
+                derivative=self.derivative,
+                identifier=f'{other} + {self.identifier}',
+                mode=self.mode,
+                source=[
+                    (self, 1),
+                ])
         else:
             raise TypeError(f"addition not supported between types FabTensor and {type(other)}")
 
@@ -268,9 +317,24 @@ class FabTensor(object):
         
         """
         if isinstance(other, FabTensor):
-            return FabTensor(self.value - other.value, derivative=self.derivative - other.derivative, identifier=f'{self.identifier} - {other.identifier}')
+            return FabTensor(
+                self.value - other.value,
+                derivative=self.derivative - other.derivative,
+                identifier=f'{self.identifier} - {other.identifier}',
+                mode=self.mode,
+                source=[
+                    (self, 1),
+                    (other, -1)
+                ])
         elif isinstance(other, _ALLOWED_TYPES):
-            return FabTensor(self.value - other, derivative=self.derivative, identifier=f'{self.identifier} - {other}')
+            return FabTensor(
+                self.value - other,
+                derivative=self.derivative,
+                identifier=f'{self.identifier} - {other}',
+                mode=self.mode,
+                source=[
+                    (self, 1)
+                ])
         else:
             raise TypeError(f"addition not supported between types FabTensor and {type(other)}")
     
@@ -286,7 +350,27 @@ class FabTensor(object):
         FabTensor
             difference of two `FabTensor` objects
         """
-        return -1 * self + other
+        if isinstance(other, FabTensor):
+            return FabTensor(
+                other.value - self.value,
+                derivative=other.derivative - self.derivative,
+                identifier=f'{other.identifier} - {self.identifier}',
+                mode=self.mode,
+                source=[
+                    (other, 1),
+                    (self, -1),
+                ])
+        elif isinstance(other, _ALLOWED_TYPES):
+            return FabTensor(
+                other - self.value,
+                derivative=-1 * self.derivative,
+                identifier=f'{other} - {self.identifier}',
+                mode=self.mode,
+                source=[
+                    (self, -1),
+                ])
+        else:
+            raise TypeError(f"addition not supported between types {type(other)} and FabTensor")
     
     def __isub__(self, other):
         """difference of two `FabTensor` objects
@@ -320,20 +404,26 @@ class FabTensor(object):
                 self.value * other.value,
                 derivative=self.value * other.derivative + other.value * self.derivative,
                 identifier=f'{self.identifier} * {other.identifier}',
-            )
+                mode=self.mode,
+                source=[
+                    (self, other.value),
+                    (other, self.value),
+                ])
         elif isinstance(other, _ALLOWED_TYPES):
-            if (other==1):
+            if other == 1:
                 identifier = self.identifier
-            elif (other==-1):
+            elif other == -1:
                 identifier=f'-{self.identifier}'
             else:
                 identifier = f'{self.identifier} * {other}'
-
             return FabTensor(
                 self.value * other,
                 derivative=self.derivative * other,
-                identifier=identifier
-            )
+                identifier=identifier,
+                mode=self.mode,
+                source=[
+                    (self, other),
+                ])
         else:
             raise TypeError(f"Cannot multiple FabTensor with object of type {type(other)}")
 
@@ -354,19 +444,26 @@ class FabTensor(object):
                 self.value * other.value,
                 derivative=self.value * other.derivative + other.value * self.derivative,
                 identifier=f'{other.identifier} * {self.identifier}',
-            )
+                mode=self.mode,
+                source=[
+                    (self, other.value),
+                    (other, self.value),
+                ])
         elif isinstance(other, _ALLOWED_TYPES):
-            if (other==1):
+            if other == 1:
                 identifier = self.identifier
-            elif (other==-1):
+            elif other == -1:
                 identifier=f'-{self.identifier}'
             else:
                 identifier = f'{other} * {self.identifier}'
             return FabTensor(
                 self.value * other,
                 derivative=self.derivative * other,
-                identifier=identifier
-            )
+                identifier=identifier,
+                mode=self.mode,
+                source=[
+                    (self, other),
+                ])
         else:
             raise TypeError(f"Cannot multiple FabTensor with object of type {type(other)}")
 
@@ -449,13 +546,22 @@ class FabTensor(object):
             return FabTensor(
                 value=value,
                 derivative=derivative,
-                identifier=f"{self.identifier}^{other.identifier}"
+                identifier=f"{self.identifier}^{other.identifier}",
+                mode=self.mode,
+                source=[
+                    (self, other.value * (self.value ** (other.value - 1))),
+                    (other, (self.value ** other.value) * np.log(self.value))
+                ]
             )
         elif isinstance(other, _ALLOWED_TYPES):
             return FabTensor(
                 value=self.value ** other,
                 derivative=other * (self.value ** (other - 1)) * self.derivative,
-                identifier=f"{self.identifier}^{other}" if other != -1 else f"1 / {self.identifier}"
+                identifier=f"{self.identifier}^{other}" if other != -1 else f"1 / {self.identifier}",
+                mode=self.mode,
+                source=[
+                    (self, other * (self.value ** (other - 1)))
+                ]
             )
         else:
             raise TypeError(f"Cannot compute power of FabTensor with object of type {type(other)}")
@@ -476,7 +582,11 @@ class FabTensor(object):
             return FabTensor(
                 value=other ** self.value,
                 derivative=(other ** self.value) * np.log(other) * self.derivative,
-                identifier=f"{other}^{self.identifier}"
+                identifier=f"{other}^{self.identifier}",
+                mode=self.mode,
+                source=[
+                    (self, (other ** self.value) * np.log(other))
+                ],
             )
         else:
             raise TypeError(f"Cannot compute power of object of type {type(other)} with FabTensor")

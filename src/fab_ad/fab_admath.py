@@ -9,86 +9,10 @@ from fab_ad import FabTensor
 from constants import _ALLOWED_TYPES, _SPECIAL_FUNCTIONS
 
 
-def sqrt(tensor):
-    """square root of tensor with updated value and derivative
-
-    Parameters
-    ----------
-    tensor : FabTensor
-
-    Returns
-    -------
-    FabTensor
-        square root of tensor with updated value and derivative
-    
-    """
-    if isinstance(tensor, FabTensor):
-        if tensor.value < 0:
-            raise ValueError("Cannot compute sqrt for FabTensor with negative value!")
-        return FabTensor(
-            value=tensor.value ** 0.5,
-            derivative=0.5 * (tensor.value ** -0.5) * tensor.derivative,
-            identifier=f"sqrt({tensor.identifier})"
-        )
-    elif isinstance(tensor, _ALLOWED_TYPES):
-        if tensor < 0.0:
-            raise ValueError("Value of tensor out of range for function sqrt!")
-        return FabTensor(value=tensor ** 0.5, derivative = 0, identifier="sqrt(input)")
-    else:
-        raise TypeError(f"Methods {_SPECIAL_FUNCTIONS} can be used on FabTensor objects and {_ALLOWED_TYPES} only!")
-
-
-def exp(tensor):
-    """exponential of tensor with updated value and derivative
-
-    Parameters
-    ----------
-    tensor : FabTensor
-
-    Returns
-    -------
-    FabTensor
-        exponential of tensor with updated value and derivative
-    
-    """
-    if isinstance(tensor, FabTensor):
-        return FabTensor(
-            value=np.exp(tensor.value),
-            derivative=np.exp(tensor.value) * tensor.derivative,
-            identifier=f"e^({tensor.identifier})"
-        )
-    elif isinstance(tensor, _ALLOWED_TYPES):
-        return FabTensor(value=np.exp(tensor), derivative = 0, identifier="sqrt(input)")
-    else:
-        raise TypeError(f"Methods {_SPECIAL_FUNCTIONS} can be used on FabTensor objects and {_ALLOWED_TYPES} only!")
-
-
-def log(tensor):
-    """natural log of tensor with updated value and derivative
-
-    Parameters
-    ----------
-    tensor : FabTensor
-
-    Returns
-    -------
-    FabTensor
-        natural log of tensor with updated value and derivative
-    """
-    if isinstance(tensor, FabTensor):
-        if tensor.value < 0:
-            raise ValueError("Cannot compute logarithm for FabTensor with negative value!")
-        return FabTensor(
-            value=np.log(tensor.value),
-            derivative=(1.0 / tensor.value) * tensor.derivative,
-            identifier=f"log({tensor.identifier})"
-        )
-    elif isinstance(tensor, _ALLOWED_TYPES):
-        if tensor < 0.0:
-            raise ValueError("Value of tensor out of range for function log!")
-        return FabTensor(value=np.log(tensor), derivative = 0, identifier="sqrt(input)")
-    else:
-        raise TypeError(f"Methods {_SPECIAL_FUNCTIONS} can be used on FabTensor objects and {_ALLOWED_TYPES} only!")
+def compute_gradient_reverse_mode(tensor: FabTensor, current_gradient=1):
+    for child_tensor, local_gradient in tensor.children:
+        child_tensor.gradient += current_gradient * local_gradient
+        compute_gradient_reverse_mode(child_tensor, )
 
 
 def sin(tensor):
@@ -107,8 +31,11 @@ def sin(tensor):
         return FabTensor(
             value=np.sin(tensor.value),
             derivative=np.cos(tensor.value) * tensor.derivative,
-            identifier=f"sin({tensor.identifier})"
-        )
+            identifier=f"sin({tensor.identifier})",
+            mode=tensor.mode,
+            source=[
+                (tensor, np.cos(tensor.value))
+            ])
     elif isinstance(tensor, _ALLOWED_TYPES):
         return FabTensor(value=np.sin(tensor), derivative = 0, identifier="sin(input)")
     else:
@@ -131,10 +58,13 @@ def cos(tensor):
         return FabTensor(
             value=np.cos(tensor.value),
             derivative=-1 * np.sin(tensor.value) * tensor.derivative,
-            identifier=f"cos({tensor.identifier})"
-        )
+            identifier=f"cos({tensor.identifier})",
+            mode=tensor.mode,
+            source=[
+                (tensor, -np.sin(tensor.value))
+            ])
     elif isinstance(tensor, _ALLOWED_TYPES):
-        return FabTensor(value=np.cos(tensor), derivative = 0, identifier="cos(input)")
+        return FabTensor(value=np.cos(tensor), derivative=0, identifier="cos(input)")
     else:
         raise TypeError(f"Methods {_SPECIAL_FUNCTIONS} can be used on FabTensor objects and {_ALLOWED_TYPES} only!")
 
@@ -155,12 +85,27 @@ def tan(tensor):
         return FabTensor(
             value=np.tan(tensor.value),
             derivative=(1 / (np.cos(tensor.value) ** 2)) * tensor.derivative,
-            identifier=f"tan({tensor.identifier})"
-        )
+            identifier=f"tan({tensor.identifier})",
+            mode=tensor.mode,
+            source=[
+                (tensor, (1 / (np.cos(tensor.value) ** 2)))
+            ])
     elif isinstance(tensor, _ALLOWED_TYPES):
-        return FabTensor(value=np.tan(tensor), derivative = 0, identifier="tan(input)")
+        return FabTensor(value=np.tan(tensor), derivative=0, identifier="tan(input)")
     else:
         raise TypeError(f"Methods {_SPECIAL_FUNCTIONS} can be used on FabTensor objects and {_ALLOWED_TYPES} only!")
+
+
+def cosec(tensor):
+    return 1 / sin(tensor)
+
+
+def sec(tensor):
+    return 1 / cos(tensor)
+
+
+def cot(tensor):
+    return 1 / tan(tensor)
 
 
 def arcsin(tensor):
@@ -181,7 +126,11 @@ def arcsin(tensor):
         return FabTensor(
             value=np.arcsin(tensor.value),
             derivative=(1 / ((1 - tensor.value ** 2) ** 0.5)) * tensor.derivative,
-            identifier=f"sin^{-1}({tensor.identifier})"
+            identifier=f"sin^{-1}({tensor.identifier})",
+            mode=tensor.mode,
+            source=[
+                (tensor, 1 / ((1 - tensor.value ** 2) ** 0.5)),
+            ]
         )
     elif isinstance(tensor, _ALLOWED_TYPES):
         if not (-1 <= tensor <= 1):
@@ -209,7 +158,11 @@ def arccos(tensor):
         return FabTensor(
             value=np.arcsin(tensor.value),
             derivative=(-1 / ((1 - tensor.value ** 2) ** 0.5)) * tensor.derivative,
-            identifier=f"cos^{-1}({tensor.identifier})"
+            identifier=f"cos^{-1}({tensor.identifier})",
+            mode=tensor.mode,
+            source=[
+                (tensor, -1 / ((1 - tensor.value ** 2) ** 0.5))
+            ]
         )
     elif isinstance(tensor, _ALLOWED_TYPES):
         if not (-1 <= tensor <= 1):
@@ -235,7 +188,11 @@ def arctan(tensor):
         return FabTensor(
             value=np.arctan(tensor.value),
             derivative=(1 / (1 + tensor.value ** 2)) * tensor.derivative,
-            identifier=f"tan^{-1}({tensor.identifier})"
+            identifier=f"tan^{-1}({tensor.identifier})",
+            mode=tensor.mode,
+            source=[
+                (tensor, 1 / (1 + tensor.value ** 2)),
+            ]
         )
     elif isinstance(tensor, _ALLOWED_TYPES):
         return FabTensor(value=np.arctan(tensor), derivative = 0, identifier="tan^{-1}(input)")
@@ -243,8 +200,8 @@ def arctan(tensor):
         raise TypeError(f"Methods {_SPECIAL_FUNCTIONS} can be used on FabTensor objects and {_ALLOWED_TYPES} only!")
 
 
-def sigmoid(tensor):
-    """sigmoid of tensor with updated value and derivative
+def arccosec(tensor):
+    """cosec inverse of tensor with updated value and derivative
 
     Parameters
     ----------
@@ -253,12 +210,217 @@ def sigmoid(tensor):
     Returns
     -------
     FabTensor
-        sigmoid of tensor with updated value and derivative
-    
+        cosec inverse of tensor with updated value and derivative
+    """
+    return arcsin(1 / tensor)
+
+
+def arcsec(tensor):
+    """sec inverse of tensor with updated value and derivative
+
+    Parameters
+    ----------
+    tensor : FabTensor
+
+    Returns
+    -------
+    FabTensor
+        sec inverse of tensor with updated value and derivative
+    """
+    return arccos(1 / tensor)
+
+
+def arccot(tensor):
+    """cot inverse of tensor with updated value and derivative
+
+    Parameters
+    ----------
+    tensor : FabTensor
+
+    Returns
+    -------
+    FabTensor
+        cot inverse of tensor with updated value and derivative
+    """
+    return arctan(1 / tensor)
+
+
+def exp(tensor, base=np.e):
+    """exponential of tensor with updated value and derivative
+
+    Parameters
+    ----------
+    tensor : FabTensor
+
+    Returns
+    -------
+    FabTensor
+        exponential of tensor with updated value and derivative
+
+    """
+    return base ** tensor
+
+
+def sinh(tensor):
+    """sinh of tensor with updated value and derivative
+
+    Parameters
+    ----------
+    tensor : FabTensor
+
+    Returns
+    -------
+    FabTensor
+        sinh of tensor with updated value and derivative
     """
     if isinstance(tensor, FabTensor):
-        return 1/(1 + exp(-tensor))
+        return FabTensor(
+            value=np.sinh(tensor.value),
+            derivative=np.cosh(tensor.value) * tensor.derivative,
+            identifier=f"sinh({tensor.identifier})",
+            mode=tensor.mode,
+            source=[
+                (tensor, np.cosh(tensor.value)),
+            ]
+        )
     elif isinstance(tensor, _ALLOWED_TYPES):
-        return FabTensor(value=1/(1 + np.exp(-tensor)), derivative = 0, identifier=f"sigmoid({tensor})")
+        return FabTensor(value=np.sinh(tensor), derivative=0, identifier="sinh(input)")
     else:
         raise TypeError(f"Methods {_SPECIAL_FUNCTIONS} can be used on FabTensor objects and {_ALLOWED_TYPES} only!")
+
+
+def cosh(tensor):
+    """cosh of tensor with updated value and derivative
+
+    Parameters
+    ----------
+    tensor : FabTensor
+
+    Returns
+    -------
+    FabTensor
+        cosh of tensor with updated value and derivative
+    """
+    if isinstance(tensor, FabTensor):
+        return FabTensor(
+            value=np.cosh(tensor.value),
+            derivative=np.sinh(tensor.value) * tensor.derivative,
+            identifier=f"cosh({tensor.identifier})",
+            mode=tensor.mode,
+            source=[
+                (tensor, np.sinh(tensor.value)),
+            ]
+        )
+    elif isinstance(tensor, _ALLOWED_TYPES):
+        return FabTensor(value=np.cosh(tensor), derivative=0, identifier="cosh(input)")
+    else:
+        raise TypeError(f"Methods {_SPECIAL_FUNCTIONS} can be used on FabTensor objects and {_ALLOWED_TYPES} only!")
+
+
+def tanh(tensor):
+    """cosh of tensor with updated value and derivative
+
+    Parameters
+    ----------
+    tensor : FabTensor
+
+    Returns
+    -------
+    FabTensor
+        cosh of tensor with updated value and derivative
+    """
+    if isinstance(tensor, FabTensor):
+        return FabTensor(
+            value=np.tanh(tensor.value),
+            derivative=(1 / np.cosh(tensor.value) ** 2) * tensor.derivative,
+            identifier=f"tanh({tensor.identifier})",
+            mode=tensor.mode,
+            source=[
+                (tensor, 1 / np.cosh(tensor.value) ** 2),
+            ]
+        )
+    elif isinstance(tensor, _ALLOWED_TYPES):
+        return FabTensor(value=np.cosh(tensor), derivative=0, identifier="tanh(input)")
+    else:
+        raise TypeError(f"Methods {_SPECIAL_FUNCTIONS} can be used on FabTensor objects and {_ALLOWED_TYPES} only!")
+
+
+def cosech(tensor):
+    return 1 / sinh(tensor)
+
+
+def sech(tensor):
+    return 1 / cosh(tensor)
+
+
+def coth(tensor):
+    return 1 / tanh(tensor)
+
+
+def logistic(tensor):
+    """logistic of tensor with updated value and derivative
+
+    Parameters
+    ----------
+    tensor : FabTensor
+
+    Returns
+    -------
+    FabTensor
+        logistic of tensor with updated value and derivative
+
+    """
+    if isinstance(tensor, FabTensor):
+        return 1 / (1 + exp(-tensor))
+    elif isinstance(tensor, _ALLOWED_TYPES):
+        return FabTensor(value=1 / (1 + np.exp(-tensor)), derivative=0, identifier=f"logistic({tensor})")
+    else:
+        raise TypeError(f"Methods {_SPECIAL_FUNCTIONS} can be used on FabTensor objects and {_ALLOWED_TYPES} only!")
+
+
+def log(tensor, base=np.e):
+    """natural logarithm of tensor with updated value and derivative
+
+    Parameters
+    ----------
+    tensor : FabTensor
+    base : float
+
+    Returns
+    -------
+    FabTensor
+        natural log of tensor with updated value and derivative
+    """
+    if isinstance(tensor, FabTensor):
+        if tensor.value < 0:
+            raise ValueError("Cannot compute logarithm for FabTensor with negative value!")
+        return FabTensor(
+            value=np.log(tensor.value),
+            derivative=(1.0 / tensor.value) * tensor.derivative * (1 / np.log(base)),
+            identifier=f"log({tensor.identifier})",
+            mode=tensor.mode,
+            source=[
+                (tensor, 1.0 / (tensor.value * np.log(base))),
+            ]
+        )
+    elif isinstance(tensor, _ALLOWED_TYPES):
+        if tensor < 0.0:
+            raise ValueError("Value of tensor out of range for function log!")
+        return FabTensor(value=np.log(tensor), derivative=0, identifier="log(input)")
+    else:
+        raise TypeError(f"Methods {_SPECIAL_FUNCTIONS} can be used on FabTensor objects and {_ALLOWED_TYPES} only!")
+
+
+def sqrt(tensor):
+    """square root of tensor with updated value and derivative
+
+    Parameters
+    ----------
+    tensor : FabTensor
+
+    Returns
+    -------
+    FabTensor
+        square root of tensor with updated value and derivative
+    """
+    return tensor ** 0.5
