@@ -10,12 +10,41 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from typing import Iterable, Union, Type
 from numbers import Number
 
-from constants import _ALLOWED_TYPES, _SPECIAL_FUNCTIONS, AdMode
+from constants import _ALLOWED_TYPES, _SPECIAL_FUNCTIONS, AdMode, _MAX_INDEPENDENT_VARS, _GLOBAL_COUNTER, ArgMode
+
+
+class FabSession(object):
+
+    def __init__(self, num_independent_tensors=_MAX_INDEPENDENT_VARS, global_tensor_count=-1):
+        self.max_num_independent_tensors = num_independent_tensors
+        self.global_tensor_count = global_tensor_count
+
+    def get_index(self):
+        self.global_tensor_count += 1
+        if self.global_tensor_count >= self.max_num_independent_tensors:
+            raise IndexError("Cannot compute gradient!")
+        return self.global_tensor_count
+
+    def initialize_derivative(self, value):
+        if type(value) == list or type(value) == np.ndarray:
+            m = len(value)
+            derivative = np.zeros((self.max_num_independent_tensors, m))
+        else:
+            derivative = np.zeros(self.max_num_independent_tensors)
+        index = self.get_index()
+        derivative[index] = 1
+        return derivative
+
+    def clear(self):
+        self.global_tensor_count = -1
+
+
+fab_session = FabSession()
 
 
 class FabTensor(object):
 
-    def __init__(self, value, derivative=None, identifier="", mode="forward", source=[]):
+    def __init__(self, value, derivative=None, identifier="", mode=AdMode.FORWARD, source=[]):
         """init method
 
         Parameters
@@ -28,9 +57,11 @@ class FabTensor(object):
             function expression, by default ""
         """
         self.value = value
+        if type(self.value) is list:
+            self.value = np.array(self.value)
         # derivative w.r.t all independent variables
         if derivative is None:
-            derivative = 1.0
+            derivative = fab_session.initialize_derivative(value)
         if isinstance(derivative, _ALLOWED_TYPES):
             derivative = [derivative]
         self.derivative = np.array(derivative)
@@ -42,18 +73,6 @@ class FabTensor(object):
         self.source = source
         self._reverse_mode_gradient = None
 
-    @property
-    def gradient(self):
-        if self._reverse_mode_gradient is None:
-            raise ValueError("Gradients not initialized yet. Run reverse mode AD to compute gradients!")
-        return self._reverse_mode_gradient
-
-    @gradient.setter
-    def gradient(self, value):
-        self._reverse_mode_gradient = value
-
-    def compute_reverse_mode_gradient(self):
-        return sum((weight * child.gradient for child, weight in self.source))
 
     def __repr__(self):
         """Represents the FabTensor as a string
@@ -94,7 +113,6 @@ class FabTensor(object):
         else:
             raise TypeError(f"Cannot compare FabTensor and object of type {type(other)}")
 
-    
     def __ne__(self, other):
         """Checks if value attribute of two `FabTensor` objects are not equal.
 
@@ -592,7 +610,7 @@ class FabTensor(object):
             raise TypeError(f"Cannot compute power of object of type {type(other)} with FabTensor")
 
     def directional_derivative(self, seed_vector: np.array):
-        """directional derivative w.r.t alls eed vectors
+        """directional derivative w.r.t alls seed vectors
 
         Parameters
         ----------
@@ -605,3 +623,19 @@ class FabTensor(object):
             directional derivative w.r.t given seed vectors
         """
         return np.array(seed_vector).dot(self.derivative)
+
+
+    @property
+    def gradient(self):
+        if self._reverse_mode_gradient is None:
+            raise ValueError("Gradients not initialized yet. Run reverse mode AD to compute gradients!")
+        return self._reverse_mode_gradient
+
+
+    @gradient.setter
+    def gradient(self, value):
+        self._reverse_mode_gradient = value
+
+
+    def compute_reverse_mode_gradient(self):
+        return sum((weight * child.gradient for child, weight in self.source))
