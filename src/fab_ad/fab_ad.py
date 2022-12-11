@@ -71,8 +71,7 @@ class FabTensor(object):
         assert mode in [AdMode.FORWARD, AdMode.REVERSE]
         self.mode = mode
         self.source = source
-        self._reverse_mode_gradient = None
-
+        self._reverse_mode_gradient = 0
 
     def __repr__(self):
         """Represents the FabTensor as a string
@@ -627,15 +626,9 @@ class FabTensor(object):
 
     @property
     def gradient(self):
-        if self._reverse_mode_gradient is None:
-            raise ValueError("Gradients not initialized yet. Run reverse mode AD to compute gradients!")
         return self._reverse_mode_gradient
 
 
     @gradient.setter
     def gradient(self, value):
         self._reverse_mode_gradient = value
-
-
-    def compute_reverse_mode_gradient(self):
-        return sum((weight * child.gradient for child, weight in self.source))

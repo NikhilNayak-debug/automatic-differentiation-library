@@ -59,3 +59,12 @@ functions = [
     x ** 2 + 2 * y ** 2
 ]
 print(auto_diff(functions, mode=AdMode.FORWARD))
+
+# scalar input; scalar output; reverse mode ad
+fab_session.clear()
+x = FabTensor(value=3, identifier="x")
+z = x ** 2 + 2 * x + 1
+print(z.source)
+print(z.source[0][0].source)
+print(z.source[0][0].source[0][0].source)
+print(auto_diff(input=x, output=z, mode=AdMode.REVERSE))
