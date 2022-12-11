@@ -6,8 +6,8 @@ from typing import Union
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import numpy as np
-from fab_ad_tensor import FabTensor
-from constants import _ALLOWED_NUMERICS, _SPECIAL_FUNCTIONS
+from .fab_ad_tensor import FabTensor
+from .constants import _ALLOWED_NUMERICS, _SPECIAL_FUNCTIONS
 
 
 def sin(tensor: Union[FabTensor, numbers.Number, np.ndarray]) -> FabTensor:

@@ -2,7 +2,7 @@ import numbers
 import numpy as np
 from typing import Iterable, Union, Type
 
-from constants import _MAX_INDEPENDENT_VARS
+from .constants import _MAX_INDEPENDENT_VARS
 
 
 class FabAdSession(object):
