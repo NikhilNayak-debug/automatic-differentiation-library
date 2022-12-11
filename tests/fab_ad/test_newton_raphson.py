@@ -2,13 +2,16 @@ import numpy as np
 import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src/fab_ad')))
-from fab_ad import FabTensor, fab_session
-from fab_admode import auto_diff
+from fab_ad_tensor import FabTensor, AdMode
+from fab_ad_session import fab_ad_session
+from fab_ad_diff import auto_diff
 from constants import *
+
 
 def func(x):
     z = x * x * x - x * x + 2
     return auto_diff(output=z, mode=AdMode.FORWARD).value
+
 
 def derivFunc(x):
     z = x * x * x - x * x + 2
@@ -17,7 +20,7 @@ def derivFunc(x):
 
 # Function to find the root
 def newtonRaphson(x):
-    fab_session.clear()
+    fab_ad_session.clear()
     tensor = FabTensor(value=x, identifier="x")
     h = func(tensor) / derivFunc(tensor)
     while True:
@@ -29,7 +32,7 @@ def newtonRaphson(x):
                 break
         # x(i+1) = x(i) - f(x) / f'(x)
         x = x - h
-        fab_session.clear()
+        fab_ad_session.clear()
         tensor = FabTensor(value=x, identifier="x")
         h = func(tensor) / derivFunc(tensor)
 

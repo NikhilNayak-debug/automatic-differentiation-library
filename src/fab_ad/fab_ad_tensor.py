@@ -1,52 +1,27 @@
 from __future__ import annotations
-
+import numbers
 import os
 import sys
-import math
 import numpy as np
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from typing import Iterable, Union, Type
-from numbers import Number
+from enum import Enum
+from typing import Iterable, Union
 
-from constants import _ALLOWED_TYPES, _SPECIAL_FUNCTIONS, AdMode, _MAX_INDEPENDENT_VARS, _GLOBAL_COUNTER, ArgMode
-
-
-class FabSession(object):
-
-    def __init__(self, num_independent_tensors=_MAX_INDEPENDENT_VARS, global_tensor_count=-1):
-        self.max_num_independent_tensors = num_independent_tensors
-        self.global_tensor_count = global_tensor_count
-        self.src_tensors = []
-
-    def get_index(self):
-        self.global_tensor_count += 1
-        if self.global_tensor_count >= self.max_num_independent_tensors:
-            raise IndexError("Cannot compute gradient!")
-        return self.global_tensor_count
-
-    def initialize_derivative(self, value):
-        if type(value) == list or type(value) == np.ndarray:
-            m = len(value)
-            derivative = np.zeros((self.max_num_independent_tensors, m))
-        else:
-            derivative = np.zeros(self.max_num_independent_tensors)
-        index = self.get_index()
-        derivative[index] = 1
-        return derivative
-
-    def clear(self):
-        self.global_tensor_count = -1
-        self.src_tensors = []
+from constants import _ALLOWED_NUMERICS
+from fab_ad_session import fab_ad_session
 
 
-fab_session = FabSession()
+class AdMode(Enum):
+    FORWARD = "forward"
+    REVERSE = "reverse"
 
 
 class FabTensor(object):
 
-    def __init__(self, value, derivative=None, identifier="", mode=AdMode.FORWARD, source=[]):
+    def __init__(self, value: Union[Iterable, numbers.Number], derivative: Union[Iterable, numbers.Number] = None,
+                 identifier: str = "", mode: Enum = AdMode.FORWARD, source: list = [], depth: int = 0):
         """init method
 
         Parameters
@@ -59,24 +34,26 @@ class FabTensor(object):
             function expression, by default ""
         """
         self.value = value
-        if type(self.value) is list:
+        if isinstance(self.value, Iterable):
             self.value = np.array(self.value)
-        # derivative w.r.t all independent variables
         if derivative is None:
-            derivative = fab_session.initialize_derivative(value)
-            fab_session.src_tensors.append(self)
-        if isinstance(derivative, _ALLOWED_TYPES):
+            # derivative w.r.t all independent variables
+            derivative = fab_ad_session.initialize_derivative(value)
+        self.depth = depth
+        if self.depth == 0:
+            # add tensor to list of source nodes in session
+            fab_ad_session.src_tensors.append(self)
+        if isinstance(derivative, (int, float, numbers.Integral, numbers.Number)):
             derivative = [derivative]
         self.derivative = np.array(derivative)
         self.identifier = identifier
 
-        # attributes for reverse mode
         assert mode in [AdMode.FORWARD, AdMode.REVERSE]
         self.mode = mode
         self.source = source
         self._reverse_mode_gradient = 0
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Represents the FabTensor as a string
 
         Returns
@@ -84,9 +61,10 @@ class FabTensor(object):
         str
             FabTensor as a string
         """
-        return f"value: {self.value} derivative: {self.derivative} name: {self.identifier}"
+        return f"value: {self.value} derivative: {self.derivative}" \
+               f" name: {self.identifier} reverse mode gradient: {self._reverse_mode_gradient}"
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Represents the FabTensor as a string
 
         Returns
@@ -94,9 +72,10 @@ class FabTensor(object):
         str
             FabTensor as a string
         """
-        return f"value: {self.value} derivative: {self.derivative} name: {self.identifier}"
+        return f"value: {self.value} derivative: {self.derivative}" \
+               f" name: {self.identifier} reverse mode gradient: {self._reverse_mode_gradient}"
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Checks if value attribute of two `FabTensor` objects are equal.
 
         Parameters
@@ -110,12 +89,12 @@ class FabTensor(object):
         """
         if isinstance(other, FabTensor):
             return self.value == other.value
-        elif isinstance(other, _ALLOWED_TYPES):
+        elif isinstance(other, _ALLOWED_NUMERICS):
             return self.value == other
         else:
             raise TypeError(f"Cannot compare FabTensor and object of type {type(other)}")
 
-    def __ne__(self, other):
+    def __ne__(self, other) -> bool:
         """Checks if value attribute of two `FabTensor` objects are not equal.
 
         Parameters
@@ -130,12 +109,12 @@ class FabTensor(object):
         """
         if isinstance(other, FabTensor):
             return self.value != other.value
-        elif isinstance(other, _ALLOWED_TYPES):
+        elif isinstance(other, _ALLOWED_NUMERICS):
             return self.value != other
         else:
             raise TypeError(f"Cannot compare FabTensor and object of type {type(other)}")
 
-    def __lt__(self, other):
+    def __lt__(self, other) -> bool:
         """Checks if value attribute of self is less than other `FabTensor` object
 
         Parameters
@@ -150,12 +129,12 @@ class FabTensor(object):
         """
         if isinstance(other, FabTensor):
             return self.value < other.value
-        elif isinstance(other, _ALLOWED_TYPES):
+        elif isinstance(other, _ALLOWED_NUMERICS):
             return self.value < other
         else:
             raise TypeError(f"Cannot compare FabTensor and object of type {type(other)}")
 
-    def __gt__(self, other):
+    def __gt__(self, other) -> bool:
         """Checks if value attribute of self is greater than other `FabTensor` object
 
         Parameters
@@ -170,12 +149,12 @@ class FabTensor(object):
         """
         if isinstance(other, FabTensor):
             return self.value > other.value
-        elif isinstance(other, _ALLOWED_TYPES):
+        elif isinstance(other, _ALLOWED_NUMERICS):
             return self.value > other
         else:
             raise TypeError(f"Cannot compare FabTensor and object of type {type(other)}")
 
-    def __le__(self, other):
+    def __le__(self, other) -> bool:
         """Checks if value attribute of self is less than or equal to other `FabTensor` object
 
         Parameters
@@ -190,12 +169,12 @@ class FabTensor(object):
         """
         if isinstance(other, FabTensor):
             return self.value <= other.value
-        elif isinstance(other, _ALLOWED_TYPES):
+        elif isinstance(other, _ALLOWED_NUMERICS):
             return self.value <= other
         else:
             raise TypeError(f"Cannot compare FabTensor and object of type {type(other)}")
 
-    def __ge__(self, other):
+    def __ge__(self, other) -> bool:
         """Checks if value attribute of self is greater than or equal to other `FabTensor` object
 
         Parameters
@@ -210,12 +189,12 @@ class FabTensor(object):
         """
         if isinstance(other, FabTensor):
             return self.value >= other.value
-        elif isinstance(other, _ALLOWED_TYPES):
+        elif isinstance(other, _ALLOWED_NUMERICS):
             return self.value >= other
         else:
             raise TypeError(f"Cannot compare FabTensor and object of type {type(other)}")
 
-    def __len__(self):
+    def __len__(self) -> int:
         """return length of derivative array
 
         Returns
@@ -229,7 +208,7 @@ class FabTensor(object):
         else:
             raise ValueError("derivative is not initialized yet!")
     
-    def __neg__(self):
+    def __neg__(self) -> FabTensor:
         """negation of `FabTensor` object
 
         Returns
@@ -239,7 +218,7 @@ class FabTensor(object):
         """
         return -1 * self
 
-    def __add__(self, other):
+    def __add__(self, other: Union[numbers.Number, FabTensor]) -> FabTensor:
         """sum of two `FabTensor` objects
 
         Parameters
@@ -261,8 +240,8 @@ class FabTensor(object):
                 source=[
                     (self, 1),
                     (other, 1)
-                ])
-        elif isinstance(other, _ALLOWED_TYPES):
+                ], depth=self.depth + 1)
+        elif isinstance(other, _ALLOWED_NUMERICS):
             return FabTensor(
                 self.value + other,
                 derivative=self.derivative,
@@ -270,11 +249,11 @@ class FabTensor(object):
                 mode=self.mode,
                 source=[
                     (self, 1),
-                ])
+                ], depth=self.depth + 1)
         else:
             raise TypeError(f"addition not supported between types FabTensor and {type(other)}")
 
-    def __radd__(self, other):
+    def __radd__(self, other: Union[numbers.Number, FabTensor]) -> FabTensor:
         """sum of two `FabTensor` objects
 
         Parameters
@@ -296,8 +275,8 @@ class FabTensor(object):
                 source=[
                     (self, 1),
                     (other, 1),
-                ])
-        elif isinstance(other, _ALLOWED_TYPES):
+                ], depth=self.depth + 1)
+        elif isinstance(other, _ALLOWED_NUMERICS):
             return FabTensor(
                 self.value + other,
                 derivative=self.derivative,
@@ -305,11 +284,11 @@ class FabTensor(object):
                 mode=self.mode,
                 source=[
                     (self, 1),
-                ])
+                ], depth=self.depth + 1)
         else:
             raise TypeError(f"addition not supported between types FabTensor and {type(other)}")
 
-    def __iadd__(self, other):
+    def __iadd__(self, other: Union[numbers.Number, FabTensor]) -> FabTensor:
         """sum of two `FabTensor` objects
 
         Parameters
@@ -323,7 +302,7 @@ class FabTensor(object):
         """
         return self + other
     
-    def __sub__(self, other):
+    def __sub__(self, other: Union[numbers.Number, FabTensor]) -> FabTensor:
         """difference of two `FabTensor` objects
 
         Parameters
@@ -345,8 +324,8 @@ class FabTensor(object):
                 source=[
                     (self, 1),
                     (other, -1)
-                ])
-        elif isinstance(other, _ALLOWED_TYPES):
+                ], depth=self.depth + 1)
+        elif isinstance(other, _ALLOWED_NUMERICS):
             return FabTensor(
                 self.value - other,
                 derivative=self.derivative,
@@ -354,11 +333,11 @@ class FabTensor(object):
                 mode=self.mode,
                 source=[
                     (self, 1)
-                ])
+                ], depth=self.depth + 1)
         else:
             raise TypeError(f"addition not supported between types FabTensor and {type(other)}")
     
-    def __rsub__(self, other):
+    def __rsub__(self, other: Union[numbers.Number, FabTensor]) -> FabTensor:
         """difference of two `FabTensor` objects
 
         Parameters
@@ -379,8 +358,8 @@ class FabTensor(object):
                 source=[
                     (other, 1),
                     (self, -1),
-                ])
-        elif isinstance(other, _ALLOWED_TYPES):
+                ], depth=self.depth + 1)
+        elif isinstance(other, _ALLOWED_NUMERICS):
             return FabTensor(
                 other - self.value,
                 derivative=-1 * self.derivative,
@@ -388,11 +367,11 @@ class FabTensor(object):
                 mode=self.mode,
                 source=[
                     (self, -1),
-                ])
+                ], depth=self.depth + 1)
         else:
             raise TypeError(f"addition not supported between types {type(other)} and FabTensor")
     
-    def __isub__(self, other):
+    def __isub__(self, other: Union[numbers.Number, FabTensor]) -> FabTensor:
         """difference of two `FabTensor` objects
 
         Parameters
@@ -406,7 +385,7 @@ class FabTensor(object):
         """
         return self - other
     
-    def __mul__(self, other):
+    def __mul__(self, other: Union[numbers.Number, FabTensor]) -> FabTensor:
         """product of two `FabTensor` objects
 
         Parameters
@@ -428,8 +407,8 @@ class FabTensor(object):
                 source=[
                     (self, other.value),
                     (other, self.value),
-                ])
-        elif isinstance(other, _ALLOWED_TYPES):
+                ], depth=self.depth + 1)
+        elif isinstance(other, _ALLOWED_NUMERICS):
             if other == 1:
                 identifier = self.identifier
             elif other == -1:
@@ -443,11 +422,11 @@ class FabTensor(object):
                 mode=self.mode,
                 source=[
                     (self, other),
-                ])
+                ], depth=self.depth + 1)
         else:
             raise TypeError(f"Cannot multiple FabTensor with object of type {type(other)}")
 
-    def __rmul__(self, other):
+    def __rmul__(self, other: Union[numbers.Number, FabTensor]) -> FabTensor:
         """product of two `FabTensor` objects
 
         Parameters
@@ -468,8 +447,8 @@ class FabTensor(object):
                 source=[
                     (self, other.value),
                     (other, self.value),
-                ])
-        elif isinstance(other, _ALLOWED_TYPES):
+                ], depth=self.depth + 1)
+        elif isinstance(other, _ALLOWED_NUMERICS):
             if other == 1:
                 identifier = self.identifier
             elif other == -1:
@@ -483,11 +462,11 @@ class FabTensor(object):
                 mode=self.mode,
                 source=[
                     (self, other),
-                ])
+                ], depth=self.depth + 1)
         else:
             raise TypeError(f"Cannot multiple FabTensor with object of type {type(other)}")
 
-    def __imul__(self, other):
+    def __imul__(self, other: Union[numbers.Number, FabTensor]) -> FabTensor:
         """product of two `FabTensor` objects
 
         Parameters
@@ -501,7 +480,7 @@ class FabTensor(object):
         """
         return self * other
     
-    def __truediv__(self, other):
+    def __truediv__(self, other: Union[numbers.Number, FabTensor]) -> FabTensor:
         """division of two `FabTensor` objects
 
         Parameters
@@ -520,7 +499,7 @@ class FabTensor(object):
         except Exception as e:
             raise e
     
-    def __rtruediv__(self, other):
+    def __rtruediv__(self, other: Union[numbers.Number, FabTensor]) -> FabTensor:
         """division of two `FabTensor` objects
 
         Parameters
@@ -534,7 +513,7 @@ class FabTensor(object):
         """
         return (self ** -1) * other
     
-    def __itruediv__(self, other):
+    def __itruediv__(self, other: Union[numbers.Number, FabTensor]) -> FabTensor:
         """division of two `FabTensor` objects
 
         Parameters
@@ -548,7 +527,7 @@ class FabTensor(object):
         """
         return self * (other ** (-1))
 
-    def __pow__(self, other):
+    def __pow__(self, other: Union[numbers.Number, FabTensor]) -> FabTensor:
         """power of two `FabTensor` objects
 
         Parameters
@@ -571,9 +550,9 @@ class FabTensor(object):
                 source=[
                     (self, other.value * (self.value ** (other.value - 1))),
                     (other, (self.value ** other.value) * np.log(self.value))
-                ]
+                ], depth=self.depth + 1
             )
-        elif isinstance(other, _ALLOWED_TYPES):
+        elif isinstance(other, _ALLOWED_NUMERICS):
             return FabTensor(
                 value=self.value ** other,
                 derivative=other * (self.value ** (other - 1)) * self.derivative,
@@ -581,12 +560,12 @@ class FabTensor(object):
                 mode=self.mode,
                 source=[
                     (self, other * (self.value ** (other - 1)))
-                ]
+                ], depth=self.depth + 1
             )
         else:
             raise TypeError(f"Cannot compute power of FabTensor with object of type {type(other)}")
 
-    def __rpow__(self, other):
+    def __rpow__(self, other: Union[numbers.Number, FabTensor]) -> FabTensor:
         """power of two `FabTensor` objects
 
         Parameters
@@ -598,7 +577,7 @@ class FabTensor(object):
         FabTensor
             power of two `FabTensor` objects
         """
-        if isinstance(other, _ALLOWED_TYPES):
+        if isinstance(other, _ALLOWED_NUMERICS):
             return FabTensor(
                 value=other ** self.value,
                 derivative=(other ** self.value) * np.log(other) * self.derivative,
@@ -606,12 +585,12 @@ class FabTensor(object):
                 mode=self.mode,
                 source=[
                     (self, (other ** self.value) * np.log(other))
-                ],
+                ], depth=self.depth + 1,
             )
         else:
             raise TypeError(f"Cannot compute power of object of type {type(other)} with FabTensor")
 
-    def directional_derivative(self, seed_vector: np.array):
+    def directional_derivative(self, seed_vector: Union[np.ndarray, Iterable]) -> numbers.Number:
         """directional derivative w.r.t alls seed vectors
 
         Parameters
@@ -628,10 +607,13 @@ class FabTensor(object):
 
 
     @property
-    def gradient(self):
+    def gradient(self) -> numbers.Number:
         return self._reverse_mode_gradient
 
 
     @gradient.setter
-    def gradient(self, value):
+    def gradient(self, value) -> None:
         self._reverse_mode_gradient = value
+
+    def zero_grad(self) -> None:
+        self._reverse_mode_gradient = 0

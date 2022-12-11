@@ -1,20 +1,21 @@
 # test_AD.py
 # Created at 2:15 PM 11/22/22 by Saket Joshi
-# This test file contains all the test cases for fab_ad.py
+# This test file contains all the test cases for fab_ad_tensor.py
 
 import sys
 import os
 import numpy as np
 import pytest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src/fab_ad')))
-from fab_ad import FabTensor, fab_session
-from fab_admode import auto_diff
-from fab_admath import *
+from fab_ad_tensor import FabTensor, AdMode
+from fab_ad_diff import auto_diff
+from fab_ad_session import fab_ad_session
+from fab_ad_math import *
 from constants import *
 
 
 def test_fabtensor_sqrt():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=4, identifier='x')
     y = FabTensor(value=9, identifier='y')
     z = sqrt(x) + sqrt(y)
@@ -27,7 +28,7 @@ def test_fabtensor_sqrt():
 
 
 def test_fabtensor_exp():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=4, identifier='x')
     y = FabTensor(value=9, identifier='y')
     z = exp(x) + exp(y)
@@ -40,7 +41,7 @@ def test_fabtensor_exp():
 
 
 def test_fabtensor_log():
-    fab_session.clear()
+    fab_ad_session.clear()
     tensor = FabTensor(value=4, identifier='x')
     z = log(tensor) + log(tensor)
     assert pytest.approx(z.value, 0.01) == 2.772588722239781
@@ -55,7 +56,7 @@ def test_fabtensor_log():
 
 
 def test_fabtensor_sin():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=4, identifier='x')
     z = sin(x) + sin(x)
     assert pytest.approx(z.value, 0.01) == -1.5136049906158566
@@ -68,7 +69,7 @@ def test_fabtensor_sin():
 
 
 def test_fabtensor_cos():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=4, identifier='x')
     y = FabTensor(value=9, identifier='y')
     z = cos(x) + cos(y)
@@ -83,7 +84,7 @@ def test_fabtensor_cos():
 
 
 def test_fabtensor_tan():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=4, identifier='x')
     y = FabTensor(value=9, identifier='y')
     z = tan(x) + tan(y)
@@ -98,7 +99,7 @@ def test_fabtensor_tan():
 
 
 def test_fabtensor_asin():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=0.5, identifier='x')
     y = FabTensor(value=0.5, identifier='y')
     z = arcsin(x) + arcsin(y)
@@ -115,7 +116,7 @@ def test_fabtensor_asin():
 
 
 def test_fabtensor_arccos():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=0.5 * (3 ** 0.5), identifier='x')
     y = FabTensor(value=0.5 * (3 ** 0.5), identifier='y')
     z = arccos(x) + arccos(y)
@@ -132,7 +133,7 @@ def test_fabtensor_arccos():
 
 
 def test_fabtensor_arctan():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3 ** -0.5, identifier='x')
     y = FabTensor(value=3 ** -0.5, identifier='y')
     z = arctan(x) + arctan(y)
@@ -147,7 +148,7 @@ def test_fabtensor_arctan():
 
 
 def test_fabtensor_logistic():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     y = FabTensor(value=4, identifier='y')
     z = logistic(x) + logistic(y)

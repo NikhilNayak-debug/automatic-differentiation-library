@@ -1,19 +1,20 @@
 # test_AD.py
 # Created at 2:15 PM 11/22/22 by Saket Joshi
-# This test file contains all the test cases for fab_ad.py
+# This test file contains all the test cases for fab_ad_tensor.py
 
 import sys
 import os
 import numpy as np
 import pytest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src/fab_ad')))
-from fab_ad import FabTensor, fab_session
-from fab_admode import auto_diff
+from fab_ad_tensor import FabTensor, AdMode
+from fab_ad_session import fab_ad_session
+from fab_ad_diff import auto_diff
 from constants import *
 
 
 def test_fabtensor_sanity():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     y = FabTensor(value=-4, identifier='y')
     z = x ** 2 + y ** 2
@@ -22,26 +23,26 @@ def test_fabtensor_sanity():
     assert output.gradient[0] == 6
     assert output.gradient[1] == -8
     assert z.identifier == 'x^2 + y^2'
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     output = auto_diff(output=x, mode=AdMode.FORWARD)
     assert output.gradient == 1.0
 
 
 def test_fabtensor_repr():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     assert repr(x) == "value: 3 derivative: [1. 0. 0. 0. 0. 0. 0. 0. 0. 0.] name: x"
 
 
 def test_fabtensor_str():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, derivative=0, identifier='x')
     assert str(x) == "value: 3 derivative: [0] name: x"
 
 
 def test_fabtensor_equal():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     y = FabTensor(value=3, identifier='y')
     assert x == y
@@ -49,7 +50,7 @@ def test_fabtensor_equal():
 
 
 def test_fabtensor_not_equal():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     y = FabTensor(value=4, identifier='y')
     assert x != y
@@ -57,7 +58,7 @@ def test_fabtensor_not_equal():
 
 
 def test_fabtensor_inequalities():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     y = FabTensor(value=4, identifier='y')
     assert x < y
@@ -71,14 +72,14 @@ def test_fabtensor_inequalities():
 
 
 def test_fabtensor_len():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, derivative=[1, 0], identifier='x')
     z = len(x)
     assert z == 2
 
 
 def test_fabtensor_neg():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     z = -x
     assert z.value == -3
@@ -86,7 +87,7 @@ def test_fabtensor_neg():
     assert output.gradient == -1
 
 def test_fabtensor_add():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     y = FabTensor(value=-4, identifier='y')
     z = x + y
@@ -105,7 +106,7 @@ def test_fabtensor_add():
 
 
 def test_fabtensor_radd():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     z = 1 + x
     assert z.value == 4
@@ -119,7 +120,7 @@ def test_fabtensor_radd():
 
 
 def test_fabtensor_iadd():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     y = FabTensor(value=-4, identifier='y')
     x += y
@@ -132,7 +133,7 @@ def test_fabtensor_iadd():
 
 
 def test_fabtensor_sub():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     y = FabTensor(value=-4, identifier='y')
     z = x - y
@@ -147,7 +148,7 @@ def test_fabtensor_sub():
 
 
 def test_fabtensor_rsub():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     y = FabTensor(value=-4, identifier='y')
     z = 1 - x
@@ -162,7 +163,7 @@ def test_fabtensor_rsub():
 
 
 def test_fabtensor_isub():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     y = FabTensor(value=-4, identifier='y')
     x -= y
@@ -175,7 +176,7 @@ def test_fabtensor_isub():
 
 
 def test_fabtensor_mul():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     y = FabTensor(value=-4, identifier='y')
     z = x * y
@@ -191,7 +192,7 @@ def test_fabtensor_mul():
 
 
 def test_fabtensor_rmul():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     y = FabTensor(value=-4, identifier='y')
     z = 1 * x
@@ -200,7 +201,7 @@ def test_fabtensor_rmul():
     assert z.identifier == 'x'
 
 def test_fabtensor_imul():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     y = FabTensor(value=-4, identifier='y')
     x *= y
@@ -213,7 +214,7 @@ def test_fabtensor_imul():
         z = x * np.array([2.0])
 
 def test_fabtensor_truediv():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     y = FabTensor(value=-4, identifier='y')
     z = x / y
@@ -228,20 +229,20 @@ def test_fabtensor_truediv():
 
 
 def test_fabtensor_rtruedeiv():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     z = 1 / x
     assert z.value == 0.3333333333333333
     assert z.derivative[0] == -0.1111111111111111
     assert z.identifier == '1 / x'
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=10.0, identifier='x')
     with pytest.raises(TypeError):
         z = x / np.array([1.0])
 
 
 def test_fabtensor_itruediv():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     y = FabTensor(value=-4, identifier='y')
     x /= y
@@ -254,7 +255,7 @@ def test_fabtensor_itruediv():
 
 
 def test_fabtensor_pow():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     y = FabTensor(value=4, identifier='y')
     z = x ** y
@@ -267,7 +268,7 @@ def test_fabtensor_pow():
 
 
 def test_fabtensor_rpow():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
     z = 1 ** x
     assert z.value == 1
@@ -276,7 +277,7 @@ def test_fabtensor_rpow():
 
 
 def test_fabtensor_directional_derivative():
-    fab_session.clear()
+    fab_ad_session.clear()
     x = FabTensor(value=3, derivative=[1, 0], identifier='x')
     y = FabTensor(value=-4, derivative=[0, 1], identifier='y')
     z = x * y
