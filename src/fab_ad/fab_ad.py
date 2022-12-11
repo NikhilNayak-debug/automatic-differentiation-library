@@ -18,6 +18,7 @@ class FabSession(object):
     def __init__(self, num_independent_tensors=_MAX_INDEPENDENT_VARS, global_tensor_count=-1):
         self.max_num_independent_tensors = num_independent_tensors
         self.global_tensor_count = global_tensor_count
+        self.src_tensors = []
 
     def get_index(self):
         self.global_tensor_count += 1
@@ -37,6 +38,7 @@ class FabSession(object):
 
     def clear(self):
         self.global_tensor_count = -1
+        self.src_tensors = []
 
 
 fab_session = FabSession()
@@ -62,6 +64,7 @@ class FabTensor(object):
         # derivative w.r.t all independent variables
         if derivative is None:
             derivative = fab_session.initialize_derivative(value)
+            fab_session.src_tensors.append(self)
         if isinstance(derivative, _ALLOWED_TYPES):
             derivative = [derivative]
         self.derivative = np.array(derivative)

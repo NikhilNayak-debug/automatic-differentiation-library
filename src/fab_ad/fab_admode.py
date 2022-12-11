@@ -12,11 +12,11 @@ class AutoDiffOutput:
         return f"Value: {self.value}\nGradient: {self.gradient}\n"
 
 
-def auto_diff(input=[], output=[], mode=None):
+def auto_diff(output, mode=None):
     if mode == AdMode.FORWARD:
         return forward_mode_gradient(output)
     elif mode == AdMode.REVERSE:
-        return reverse_mode_gradient(input, output)
+        return reverse_mode_gradient(output)
     elif mode is None:
         # TODO: add heuristic for optimal mode
         return None
@@ -54,21 +54,32 @@ def forward_mode_gradient(output):
 def reverse_mode_gradient_util(tensor, path_value=1):
     for source_tensor, local_gradient in tensor.source:
         new_path_value = path_value * local_gradient
-        print(f"Adding gradient {new_path_value} to tensor {source_tensor}")
+        # print(f"Adding gradient {new_path_value} to tensor {source_tensor}")
         source_tensor.gradient += new_path_value
         reverse_mode_gradient_util(source_tensor, new_path_value)
 
 
-def reverse_mode_gradient(input_tensor, output):
+def reverse_mode_gradient(output):
     if isinstance(output, FabTensor):
         reverse_mode_gradient_util(output, path_value=1)
         return AutoDiffOutput(
             value=output.value,
-            gradient=input_tensor.gradient
+            gradient=np.array([input_tensor.gradient for input_tensor in fab_session.src_tensors]) if len(fab_session.src_tensors) > 1 else fab_session.src_tensors[0].gradient
         )
     elif isinstance(output, list):
-        # TODO: implement multiple values
-        raise Exception("Not yet implemented!")
+        value = []
+        gradient = []
+        for output_tensor in output:
+            reverse_mode_gradient_util(output_tensor, path_value=1)
+            value.append(output_tensor.value)
+            gradient.append(
+                np.array([input_tensor.gradient for input_tensor in fab_session.src_tensors]) if len(
+                    fab_session.src_tensors) > 1 else fab_session.src_tensors[0].gradient
+            )
+        return AutoDiffOutput(
+            value=value,
+            gradient=gradient
+        )
     else:
         raise TypeError(f"Gradient can be computed on either List of FabTensor or FabTensor, not object of type {type(output)}")
 

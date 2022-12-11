@@ -64,7 +64,30 @@ print(auto_diff(functions, mode=AdMode.FORWARD))
 fab_session.clear()
 x = FabTensor(value=3, identifier="x")
 z = x ** 2 + 2 * x + 1
-print(z.source)
-print(z.source[0][0].source)
-print(z.source[0][0].source[0][0].source)
-print(auto_diff(input=x, output=z, mode=AdMode.REVERSE))
+print(auto_diff(z, mode=AdMode.REVERSE))
+
+# multiple scalar input; scalar output; reverse ad
+fab_session.clear()
+x = FabTensor(value=3, identifier="x")
+y = FabTensor(value=-4, identifier="y")
+z = x ** 2 + 2 * y ** 2
+print(auto_diff(z, mode=AdMode.REVERSE))
+
+# scalar input; multiple scalar output; forward ad
+fab_session.clear()
+x = FabTensor(value=3, identifier="x")
+functions = [
+    x ** 2 + 2 * x + 1,
+    x ** 3 - 8 * x
+]
+print(auto_diff(functions, mode=AdMode.FORWARD))
+
+# multiple scalar input; multiple scalar output; forward ad
+fab_session.clear()
+x = FabTensor(value=3, identifier="x")
+y = FabTensor(value=-4, identifier="y")
+functions = [
+    x ** 2 + 2 * x + 1,
+    x ** 2 + 2 * y ** 2
+]
+print(auto_diff(functions, mode=AdMode.FORWARD))
