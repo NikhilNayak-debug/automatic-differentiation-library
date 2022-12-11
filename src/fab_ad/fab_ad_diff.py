@@ -2,8 +2,8 @@ import numbers
 import numpy as np
 from typing import Union, Iterable
 
-from .fab_ad_tensor import FabTensor, AdMode
-from .fab_ad_session import fab_ad_session
+from fab_ad_tensor import FabTensor, AdMode
+from fab_ad_session import fab_ad_session
 
 
 class AutoDiffOutput:

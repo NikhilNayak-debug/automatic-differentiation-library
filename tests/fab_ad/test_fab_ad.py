@@ -286,27 +286,4 @@ def test_fabtensor_directional_derivative():
 
 
 if __name__ == "__main__":
-
-    test_fabtensor_sanity()
-    test_fabtensor_repr()
-    test_fabtensor_str()
-    test_fabtensor_equal()
-    test_fabtensor_not_equal()
-    test_fabtensor_inequalities()
-    test_fabtensor_len()
-    test_fabtensor_neg()
-    test_fabtensor_add()
-    test_fabtensor_radd()
-    test_fabtensor_iadd()
-    test_fabtensor_sub()
-    test_fabtensor_rsub()
-    test_fabtensor_isub()
-    test_fabtensor_mul()
-    test_fabtensor_rmul()
-    test_fabtensor_imul()
-    test_fabtensor_truediv()
-    test_fabtensor_rtruedeiv()
-    test_fabtensor_itruediv()
-    test_fabtensor_pow()
-    test_fabtensor_rpow()
-    test_fabtensor_directional_derivative()
+    pass
