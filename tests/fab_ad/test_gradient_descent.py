@@ -16,7 +16,7 @@ def gradient_descent(
 ):
     vector = start
     for _ in range(n_iter):
-        fab_session.clear()
+        fab_ad_session.clear()
         x = FabTensor(value=vector[0], identifier="x")
         y = FabTensor(value=vector[1], identifier="y")
         diff = -learn_rate * function_derivative(x, y)

@@ -50,7 +50,7 @@ def test_fabtensor_log():
     z = log(np.exp(1))
     assert pytest.approx(z.value, 0.01) == 1
     with pytest.raises(TypeError):
-        log(np.array([0.0]))
+        log({1.0})
     with pytest.raises(ValueError):
         log(-1)
 
@@ -65,7 +65,7 @@ def test_fabtensor_sin():
     z = sin(np.pi / 2)
     assert z.value == 1
     with pytest.raises(TypeError):
-        sin(np.array([0.0]))
+        sin({0.0})
 
 
 def test_fabtensor_cos():
@@ -80,7 +80,7 @@ def test_fabtensor_cos():
     z = cos(np.pi / 2)
     assert pytest.approx(z.value, 0.00001) == 0
     with pytest.raises(TypeError):
-        cos(np.array([0.0]))
+        cos({0.0})
 
 
 def test_fabtensor_tan():
@@ -95,7 +95,7 @@ def test_fabtensor_tan():
     z = tan(np.pi / 4)
     assert pytest.approx(z.value, 0.00001) == 1
     with pytest.raises(TypeError):
-        tan(np.array([0.0]))
+        tan({0.0})
 
 
 def test_fabtensor_asin():
@@ -112,7 +112,7 @@ def test_fabtensor_asin():
     with pytest.raises(ValueError):
         arcsin(2)
     with pytest.raises(TypeError):
-        arcsin(np.array([0.0]))
+        arcsin({0.0})
 
 
 def test_fabtensor_arccos():
@@ -129,7 +129,7 @@ def test_fabtensor_arccos():
     with pytest.raises(ValueError):
         arccos(2)
     with pytest.raises(TypeError):
-        arccos(np.array([0.0]))
+        arccos({0.0})
 
 
 def test_fabtensor_arctan():
@@ -144,7 +144,7 @@ def test_fabtensor_arctan():
     z = arctan(1)
     assert pytest.approx(z.value, 0.00001) == np.pi / 4
     with pytest.raises(TypeError):
-        arctan(np.array([0.0]))
+        arctan({0.0})
 
 
 def test_fabtensor_logistic():
@@ -158,7 +158,7 @@ def test_fabtensor_logistic():
     z = logistic(1)
     assert pytest.approx(z.value, 0.00001) == np.exp(1) / (1 + np.exp(1))
     with pytest.raises(TypeError):
-        logistic(np.array([0.0]))
+        logistic({0.0})
 
 
 if __name__ == "__main__":
