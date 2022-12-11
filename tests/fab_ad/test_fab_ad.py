@@ -32,13 +32,13 @@ def test_fabtensor_sanity():
 def test_fabtensor_repr():
     fab_ad_session.clear()
     x = FabTensor(value=3, identifier='x')
-    assert repr(x) == "value: 3 derivative: [1. 0. 0. 0. 0. 0. 0. 0. 0. 0.] name: x"
+    assert repr(x) == "value: 3 derivative: [1. 0. 0. 0. 0. 0. 0. 0. 0. 0.] name: x reverse mode gradient: 0"
 
 
 def test_fabtensor_str():
     fab_ad_session.clear()
     x = FabTensor(value=3, derivative=0, identifier='x')
-    assert str(x) == "value: 3 derivative: [0] name: x"
+    assert str(x) == "value: 3 derivative: [0] name: x reverse mode gradient: 0"
 
 
 def test_fabtensor_equal():
@@ -129,7 +129,7 @@ def test_fabtensor_iadd():
     assert x.identifier == 'x + y'
 
     with pytest.raises(TypeError):
-        x += np.array([2.0])
+        x += {1.0}
 
 
 def test_fabtensor_sub():
@@ -172,7 +172,7 @@ def test_fabtensor_isub():
     assert x.identifier == 'x - y'
 
     with pytest.raises(TypeError):
-        x -= np.array([2.0])
+        x -= {1.0}
 
 
 def test_fabtensor_mul():
@@ -211,7 +211,7 @@ def test_fabtensor_imul():
     assert x.identifier == 'x * y'
 
     with pytest.raises(TypeError):
-        z = x * np.array([2.0])
+        z = x * {2.0}
 
 def test_fabtensor_truediv():
     fab_ad_session.clear()
@@ -238,7 +238,7 @@ def test_fabtensor_rtruedeiv():
     fab_ad_session.clear()
     x = FabTensor(value=10.0, identifier='x')
     with pytest.raises(TypeError):
-        z = x / np.array([1.0])
+        z = x / {2.0}
 
 
 def test_fabtensor_itruediv():
@@ -251,7 +251,7 @@ def test_fabtensor_itruediv():
     assert x.derivative[1] == -0.1875
     assert x.identifier == 'x * 1 / y'
     with pytest.raises(TypeError):
-        x /= np.array([10.0])
+        x /= {2.0}
 
 
 def test_fabtensor_pow():
@@ -264,7 +264,7 @@ def test_fabtensor_pow():
     assert pytest.approx(z.derivative[1], 0.01) == 88.9875953821169
     assert z.identifier == 'x^y'
     with pytest.raises(TypeError):
-        z = x ** np.array([2.0])
+        z = x ** {2.0}
 
 
 def test_fabtensor_rpow():
