@@ -8,11 +8,11 @@ from constants import *
 
 def func(x):
     z = x * x * x - x * x + 2
-    return auto_diff(z, mode=AdMode.FORWARD).value
+    return auto_diff(output=z, mode=AdMode.FORWARD).value
 
 def derivFunc(x):
     z = x * x * x - x * x + 2
-    return auto_diff(z, mode=AdMode.FORWARD).gradient
+    return auto_diff(output=z, mode=AdMode.FORWARD).gradient
 
 
 # Function to find the root

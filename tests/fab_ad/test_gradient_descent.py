@@ -8,7 +8,7 @@ from constants import *
 
 def function_derivative(x: FabTensor, y: FabTensor):
     z = x**2 + y**4
-    return auto_diff(z, mode=AdMode.FORWARD).gradient
+    return auto_diff(output=z, mode=AdMode.FORWARD).gradient
 
 def gradient_descent(
     function_derivative, start, learn_rate, n_iter=50, tolerance=1e-06
