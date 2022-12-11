@@ -26,9 +26,9 @@ print("Demo!")
 """,
 
         "forward mode": """import numpy as np
-from fab_ad import FabTensor, fab_session
-from fab_admode import auto_diff
-from constants import *
+from fab_ad.fab_ad_tensor import FabTensor, fab_session
+from fab_ad.fab_admode import auto_diff
+from fab_ad.constants import *
 
 
 # scalar input; scalar output; forward ad
@@ -40,9 +40,9 @@ print(auto_diff(z, mode=AdMode.FORWARD))
 """,
 
         "backward mode": """import numpy as np
-from fab_ad import FabTensor, fab_session
-from fab_admode import auto_diff
-from constants import *
+from fab_ad.fab_ad_tensor import FabTensor, fab_session
+from fab_ad.fab_admode import auto_diff
+from fab_ad.constants import *
 
 # multiple scalar input; scalar output; forward ad
 fab_session.clear()
@@ -85,6 +85,7 @@ def make_example(example_name, example_code):
         # Create a run button
         run = st.button("Run", key=example_name+"_button")
         if run and content:
+            print(f"Running code... \n {content}")
             old_stdout = sys.stdout
             redirected_output = sys.stdout = StringIO()
             exec(content)

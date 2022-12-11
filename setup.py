@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="fab-ad",                          # This is the name of the package
-    version="0.0.1",                        # The initial release version
+    version="0.0.3",                        # The initial release version
     author="Saket Joshi, Nikhil Nayak, Harsha Taneru, Nishtha Sardana, Kareema Batool,",
     description="Fab-AD is a Python package for automatic differentiation.",
     long_description=long_description,      # Long description read from the the readme file
