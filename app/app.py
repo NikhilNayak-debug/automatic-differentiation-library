@@ -2,7 +2,6 @@
 # Streamlit demonstration app.py
 # Created at 1:26 AM 12/10/22 by Saket Joshi
 #
-
 import streamlit as st
 import random, string
 import importlib
@@ -11,50 +10,18 @@ import sys
 from io import StringIO
 from contextlib import redirect_stdout
 
+
+# os.system("pip install -i https://pypi.org/simple fab-ad==1.0.7")
+# sys.path.append("/Users/saket/Documents/workdir/harvard_courses/cs107a/git/team32/src")
+
+from fab_ad.fab_ad_tensor import *
+from fab_ad.fab_ad_session import *
+from fab_ad.fab_ad_diff import *
+from fab_ad.constants import *
+
 from streamlit_ace import st_ace, KEYBINDINGS, LANGUAGES, THEMES
-# from streamlit import caching
-# from streamlit.legacy_caching import clear_cache
-# from streamlit.script_runner import RerunException
-# from streamlit_gallery.utils.readme import readme
+from examples import examples
 
-# st.set_option("server.runOnSave", True)
-
-
-examples = {
-    "demo": """
-print("Demo!")
-""",
-
-        "forward mode": """import numpy as np
-from fab_ad.fab_ad_tensor import FabTensor, fab_session
-from fab_ad.fab_admode import auto_diff
-from fab_ad.constants import *
-
-
-# scalar input; scalar output; forward ad
-fab_session.initialize(num_inputs=3)
-x = FabTensor(value=3, identifier="x")
-z = x ** 2 + 2 * x + 1
-print(auto_diff(z, mode=AdMode.FORWARD))
-
-""",
-
-        "backward mode": """import numpy as np
-from fab_ad.fab_ad_tensor import FabTensor, fab_session
-from fab_ad.fab_admode import auto_diff
-from fab_ad.constants import *
-
-# multiple scalar input; scalar output; forward ad
-fab_session.initialize(num_inputs=3)
-m = FabTensor(value=-4, identifier="m")
-x = FabTensor(value=3, identifier="x")
-y = FabTensor(value=-4, identifier="y")
-z = x ** 2 + 2 * y ** 2
-print(auto_diff(z, mode=AdMode.FORWARD))
-
-""",
-
-    }
 
 def make_example(example_name, example_code):
     st.subheader(example_name)
@@ -65,7 +32,7 @@ def make_example(example_name, example_code):
         content = st_ace(
             value=example_code,  # examples[example],
             placeholder="Add your code here",  # c2.text_input("Editor placeholder", value="Write your code here"),
-            height=200,
+            height=250,
             language="python",  # c2.selectbox("Language mode", options=LANGUAGES, index=121),
             theme="clouds",  # c2.selectbox("Theme", options=THEMES, index=35),
             # keybinding=c2.selectbox("Keybinding mode", options=KEYBINDINGS, index=3),
@@ -77,6 +44,7 @@ def make_example(example_name, example_code):
             auto_update=True,  # c2.checkbox("Auto update", value=False),
             readonly=False,  # c2.checkbox("Read-only", value=False),
             min_lines=45,
+            # max_lines=90,
             key=example_name,
         )
         # content.setValue(examples[example_selection])
@@ -85,12 +53,12 @@ def make_example(example_name, example_code):
         # Create a run button
         run = st.button("Run", key=example_name+"_button")
         if run and content:
-            print(f"Running code... \n {content}")
+            # st.subheader(f"Running code... \n {content}")
             old_stdout = sys.stdout
             redirected_output = sys.stdout = StringIO()
-            exec(content)
-            sys.stdout = old_stdout
+            exec(content, globals(), locals())
             output = redirected_output.getvalue()
+            sys.stdout = old_stdout
             st.subheader("Output")
             st.text(output)
 
