@@ -21,7 +21,13 @@ class AutoDiffOutput:
         self.gradient = gradient
 
     def __str__(self) -> str:
-<<<<<<< HEAD
+        """Represents the AutoDiffOutput as a string
+
+        Returns
+        -------
+        str
+            AutoDiffOutput as a string
+        """
         verbatim = ""
         if len(fab_ad_session.dest_tensors) > 1:
             for idx, tensor in enumerate(fab_ad_session.dest_tensors):
@@ -42,25 +48,9 @@ class AutoDiffOutput:
             verbatim += f"Function 0: Value: {self.value}\n{gradient_str}\n"
 
         return verbatim
-||||||| parent of 87519d2 (addding doc strings for methods)
-        return f"Value: {self.value}\nGradient: {self.gradient}\n"
-=======
-        """Represents the AutoDiffOutput as a string
-
-        Returns
-        -------
-        str
-            AutoDiffOutput as a string
-        """
-        return f"Value: {self.value}\nGradient: {self.gradient}\n"
->>>>>>> 87519d2 (addding doc strings for methods)
 
 
 def auto_diff(output: Union[Iterable, FabTensor], mode=None) -> AutoDiffOutput:
-<<<<<<< HEAD
-    fab_ad_session.dest_tensors = []
-||||||| parent of 87519d2 (addding doc strings for methods)
-=======
     """returns gradient in either forward or reverse mode
 
         Parameters
@@ -73,7 +63,7 @@ def auto_diff(output: Union[Iterable, FabTensor], mode=None) -> AutoDiffOutput:
             returns gradient in either forward or reverse mode
         
     """
->>>>>>> 87519d2 (addding doc strings for methods)
+    fab_ad_session.dest_tensors = []
     if mode == AdMode.FORWARD:
         result = forward_mode_gradient(output)
         return result
