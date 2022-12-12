@@ -92,14 +92,47 @@ def tan(tensor: Union[FabTensor, numbers.Number, np.ndarray]) -> FabTensor:
 
 
 def cosec(tensor: Union[FabTensor, numbers.Number, np.ndarray]) -> FabTensor:
+    """cosec of tensor with updated value and derivative
+
+    Parameters
+    ----------
+    tensor : FabTensor
+
+    Returns
+    -------
+    FabTensor
+        cosec of tensor with updated value and derivative
+    """
     return 1 / sin(tensor)
 
 
 def sec(tensor: Union[FabTensor, numbers.Number, np.ndarray]) -> FabTensor:
+    """sec of tensor with updated value and derivative
+
+    Parameters
+    ----------
+    tensor : FabTensor
+
+    Returns
+    -------
+    FabTensor
+        sec of tensor with updated value and derivative
+    """
     return 1 / cos(tensor)
 
 
 def cot(tensor: Union[FabTensor, numbers.Number, np.ndarray]) -> FabTensor:
+    """cot of tensor with updated value and derivative
+
+    Parameters
+    ----------
+    tensor : FabTensor
+
+    Returns
+    -------
+    FabTensor
+        cot of tensor with updated value and derivative
+    """
     return 1 / tan(tensor)
 
 
@@ -314,7 +347,7 @@ def cosh(tensor: Union[FabTensor, numbers.Number, np.ndarray]) -> FabTensor:
 
 
 def tanh(tensor: Union[FabTensor, numbers.Number, np.ndarray]) -> FabTensor:
-    """cosh of tensor with updated value and derivative
+    """tanh of tensor with updated value and derivative
 
     Parameters
     ----------
@@ -342,14 +375,47 @@ def tanh(tensor: Union[FabTensor, numbers.Number, np.ndarray]) -> FabTensor:
 
 
 def cosech(tensor: Union[FabTensor, numbers.Number, np.ndarray]) -> FabTensor:
+    """cosech of tensor with updated value and derivative
+
+    Parameters
+    ----------
+    tensor : FabTensor
+
+    Returns
+    -------
+    FabTensor
+        cosh of tensor with updated value and derivative
+    """
     return 1 / sinh(tensor)
 
 
 def sech(tensor: Union[FabTensor, numbers.Number, np.ndarray]) -> FabTensor:
+    """sech of tensor with updated value and derivative
+
+    Parameters
+    ----------
+    tensor : FabTensor
+
+    Returns
+    -------
+    FabTensor
+        cosh of tensor with updated value and derivative
+    """
     return 1 / cosh(tensor)
 
 
 def coth(tensor: Union[FabTensor, numbers.Number, np.ndarray]) -> FabTensor:
+    """coth of tensor with updated value and derivative
+
+    Parameters
+    ----------
+    tensor : FabTensor
+
+    Returns
+    -------
+    FabTensor
+        cosh of tensor with updated value and derivative
+    """
     return 1 / tanh(tensor)
 
 

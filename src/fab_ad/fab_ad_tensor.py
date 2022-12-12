@@ -609,12 +609,28 @@ class FabTensor(object):
 
     @property
     def gradient(self) -> numbers.Number:
+        """returns reverse mode gradient
+
+        Returns
+        -------
+        number
+            returns reverse mode gradient
+        """
         return self._reverse_mode_gradient
 
 
     @gradient.setter
     def gradient(self, value) -> None:
+        """setting reverse mode gradient
+
+        Parameters
+        ----------
+        value : np.array or number
+            gradient as array or number
+        """
         self._reverse_mode_gradient = value
 
     def zero_grad(self) -> None:
+        """setting reverse mode gradient to zero
+        """
         self._reverse_mode_gradient = 0
