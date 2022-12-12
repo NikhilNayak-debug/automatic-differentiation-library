@@ -45,7 +45,7 @@ def test_fabtensor_log():
     tensor = FabTensor(value=4, identifier='x')
     z = log(tensor) + log(tensor)
     assert pytest.approx(z.value, 0.01) == 2.772588722239781
-    assert z.derivative[0] == 0.5
+    assert pytest.approx(z.derivative[0], 0.01) == 0.5
     assert z.identifier == 'log(x) + log(x)'
     z = log(np.exp(1))
     assert pytest.approx(z.value, 0.01) == 1
