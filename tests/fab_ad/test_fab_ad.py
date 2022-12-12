@@ -32,7 +32,7 @@ def test_fabtensor_sanity():
 def test_fabtensor_repr():
     fab_ad_session.initialize(num_inputs=3)
     x = FabTensor(value=3, identifier='x')
-    assert repr(x) == "value: 3 derivative: [1. 0. 0. 0. 0. 0. 0. 0. 0. 0.] name: x reverse mode gradient: 0"
+    assert repr(x) == "value: 3 derivative: [1. 0. 0.] name: x reverse mode gradient: 0"
 
 
 def test_fabtensor_str():

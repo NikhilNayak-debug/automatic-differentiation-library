@@ -139,6 +139,16 @@ def test_ad():
     with pytest.raises(TypeError):
         fab_ad_session.initialize_derivative(value=None)
 
+    # test TypeError exception
+    fab_ad_session.initialize(num_inputs=3)
+    with pytest.raises(TypeError):
+        auto_diff(None, mode=AdMode.FORWARD)
+
+    # test TypeError exception
+    fab_ad_session.initialize(num_inputs=3)
+    with pytest.raises(TypeError):
+        auto_diff(None, mode=AdMode.REVERSE)
+
 
 if __name__ == "__main__":
     test_ad()

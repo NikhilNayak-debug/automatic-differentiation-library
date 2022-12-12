@@ -39,7 +39,7 @@ class FabAdSession(object):
         self.dest_tensors = []
 
     def initialize(self, num_inputs=_MAX_INDEPENDENT_VARS):
-        self.initialize(num_inputs=3)
+        self.clear()
         self.max_num_independent_tensors = num_inputs
 
 
