@@ -8,10 +8,20 @@ from fab_ad_session import fab_ad_session
 
 class AutoDiffOutput:
     def __init__(self, value: Union[numbers.Number, Iterable], gradient: Union[numbers.Number, Iterable]):
+        """init method
+
+        Parameters
+        ----------
+        value : number
+            intial function value
+        gradient : array
+            gradient w.r.t all seed vectors
+        """
         self.value = value
         self.gradient = gradient
 
     def __str__(self) -> str:
+<<<<<<< HEAD
         verbatim = ""
         if len(fab_ad_session.dest_tensors) > 1:
             for idx, tensor in enumerate(fab_ad_session.dest_tensors):
@@ -32,10 +42,38 @@ class AutoDiffOutput:
             verbatim += f"Function 0: Value: {self.value}\n{gradient_str}\n"
 
         return verbatim
+||||||| parent of 87519d2 (addding doc strings for methods)
+        return f"Value: {self.value}\nGradient: {self.gradient}\n"
+=======
+        """Represents the AutoDiffOutput as a string
+
+        Returns
+        -------
+        str
+            AutoDiffOutput as a string
+        """
+        return f"Value: {self.value}\nGradient: {self.gradient}\n"
+>>>>>>> 87519d2 (addding doc strings for methods)
 
 
 def auto_diff(output: Union[Iterable, FabTensor], mode=None) -> AutoDiffOutput:
+<<<<<<< HEAD
     fab_ad_session.dest_tensors = []
+||||||| parent of 87519d2 (addding doc strings for methods)
+=======
+    """returns gradient in either forward or reverse mode
+
+        Parameters
+        ----------
+        output : FabTensor
+
+        Returns
+        -------
+        number
+            returns gradient in either forward or reverse mode
+        
+    """
+>>>>>>> 87519d2 (addding doc strings for methods)
     if mode == AdMode.FORWARD:
         result = forward_mode_gradient(output)
         return result
@@ -57,6 +95,18 @@ def auto_diff(output: Union[Iterable, FabTensor], mode=None) -> AutoDiffOutput:
 
 
 def forward_mode_gradient(output: Union[Iterable, FabTensor]) -> AutoDiffOutput:
+    """returns forward_mode_gradient
+
+        Parameters
+        ----------
+        output : FabTensor
+
+        Returns
+        -------
+        number
+            returns gradient in forward mode
+        
+    """
     if isinstance(output, FabTensor):
         fab_ad_session.dest_tensors.append(output)
         gradient = output.derivative[:fab_ad_session.global_tensor_count + 1]
@@ -86,6 +136,19 @@ def forward_mode_gradient(output: Union[Iterable, FabTensor]) -> AutoDiffOutput:
 
 
 def reverse_mode_gradient_util(tensor, path_value=1):
+    """util for reverse_mode_gradient
+
+        Parameters
+        ----------
+        tensor : FabTensor
+        path_value : gradient for specific path value
+
+        Returns
+        -------
+        number
+            returns gradient util in reverse mode
+        
+    """
     for source_tensor, local_gradient in tensor.source:
         new_path_value = path_value * local_gradient
         # print(f"Adding gradient {new_path_value} to tensor {source_tensor}")
@@ -96,6 +159,18 @@ def reverse_mode_gradient_util(tensor, path_value=1):
 def reverse_mode_gradient(output: Union[Iterable, FabTensor]) -> AutoDiffOutput:
     for tensor in fab_ad_session.all_tensors:
         tensor.zero_grad()
+    """returns reverse_mode_gradient
+
+        Parameters
+        ----------
+        output : FabTensor
+
+        Returns
+        -------
+        number
+            returns gradient in reverse mode
+        
+    """
     if isinstance(output, FabTensor):
         reverse_mode_gradient_util(output, path_value=1)
         fab_ad_session.dest_tensors.append(output)
