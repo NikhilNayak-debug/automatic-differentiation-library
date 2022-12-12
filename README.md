@@ -47,8 +47,7 @@ fab_AD is available at (https://test.pypi.org/simple/ fab-ad). You can download 
 ```bash
 python3 -m venv test
 source test/bin/activate
-pip install numpy==1.23.5
-pip install -i https://test.pypi.org/simple/ fab-ad
+pip install -i https://pypi.org/simple fab-ad==1.0.7
 ```
 
  # User Guide
