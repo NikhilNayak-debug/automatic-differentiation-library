@@ -5,32 +5,13 @@
 CS107/AC207 Project
 
 # Introduction
-Differentiation is defined as the process of finding the 
-gradients/derivatives of a particular function in hand. It finds multiple 
-applications in the areas of science and engineering. With the exponential 
-growth in the size of the dataset and advancements in technologies - the 
-complexity of computing derivatives has increased and we have become 
-increasingly dependent on computers to compute derivatives.
+Differentiation is defined as the process of finding the gradients/derivatives of a particular function in hand. It finds multiple applications in the areas of science and engineering. With the exponential growth in the size of the dataset and advancements in technologies - the complexity of computing derivatives has increased and we have become increasingly dependent on computers to compute derivatives.  
 
-Currently, there are three ways to compute derivatives - finite, symbolic, 
-automatic differentiation. The finite differentiation method although 
-being quick and easy to implement - suffers from machine precision and 
-rounding errors. We are able to alleviate these issues using symbolic 
-differentiation, however, it becomes computationally very expensive as the 
-function(s) starts to get complex. We are able to alleviate both the 
-issues of computational complexity and machine precision using automatic 
-differentiation.
+Currently, there are three ways to compute derivatives - finite, symbolic, automatic differentiation. The finite differentiation method although being quick and easy to implement - suffers from machine precision and rounding errors. We are able to alleviate these issues using symbolic differentiation, however, it becomes computationally very expensive as the function(s) starts to get complex. We are able to alleviate both the issues of computational complexity and machine precision using automatic differentiation.  
 
-Automatic Differentiation leverages symbolic rules for evaluating 
-gradients - which is more accurate than using finite difference 
-approximations. But unlike a purely symbolic process, the evaluation of 
-expressions takes place early in the computation - it evaluates 
-derivatives at particular numeric values.
+Automatic Differentiation leverages symbolic rules for evaluating gradients - which is more accurate than using finite difference approximations. But unlike a purely symbolic process, the evaluation of expressions takes place early in the computation - it evaluates derivatives at particular numeric values.  
 
-The package fab-AD implements automatic differentiation for computational 
-use. fabAD can be used to automatically differentiate functions via 
-forward mode. Automatic Differentiation finds applications in 
-optimization, machine learning, and numerical methods.
+The package `fab-ad` implements automatic differentiation for computational use. `fab-ad` can be used to automatically differentiate functions via forward mode. Automatic Differentiation finds applications in optimization, machine learning, and numerical methods.  
 
 # Installation
 Our package is for Python 3 only. You can access our package by cloning 
@@ -40,6 +21,35 @@ the repository you can use `cd team32` where you can find all the files.
 From there, you can use `cd src` to go where all the modules reside. Then 
 use `python -m pip install toml` which will install all the requirements 
 specified in toml.
+
+## 3. How To Use `fab_AD`?
+
+### 3.1 Package Installation, testing and import
+#### 3.1.1 Installation from the source
+Our package is for Python 3 only. You can access our package by cloning our repository. 
+
+- To clone run our repository, run `git clone git@code.harvard.edu:CS107/team32.git` from command line. 
+- Once you clone the repository you can use `cd team32` where you can find all the files. 
+- From there, you can use `cd src` to go where all the modules reside. 
+- Then use `python -m pip install poetry` and `poetry install` which will install all the requirements specified in toml.
+- Run `poetry shell` to activate new virtual env.
+```bash
+git clone git@code.harvard.edu:CS107/team32.git
+cd team32
+python3 -m pip install poetry
+poetry install
+poetry shell
+```
+
+#### 3.1.2 Installation via PyPI
+
+fab_AD is available at (https://test.pypi.org/simple/ fab-ad). You can download it by the command given below.
+```bash
+python3 -m venv test
+source test/bin/activate
+pip install numpy==1.23.5
+pip install -i https://test.pypi.org/simple/ fab-ad
+```
 
  # User Guide
 Once you install the package, you can simple import it by `from fab_ad 
@@ -288,7 +298,7 @@ collaborations with this package.
 
 
 
-## Development environment setup
+<!-- ## Development environment setup
 
 1. Create virtual environment
 
@@ -296,7 +306,7 @@ collaborations with this package.
 ```bash
 python3 -m pip install poetry
 poetry install
-```
+``` -->
 
 ### Running tests
 <TO DO>

@@ -9,8 +9,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from enum import Enum
 from typing import Iterable, Union
 
-from .constants import _ALLOWED_NUMERICS
-from .fab_ad_session import fab_ad_session
+from constants import _ALLOWED_NUMERICS
+from fab_ad_session import fab_ad_session
 
 
 class AdMode(Enum):
