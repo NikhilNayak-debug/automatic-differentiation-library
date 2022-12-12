@@ -12,46 +12,71 @@ class AutoDiffOutput:
         self.gradient = gradient
 
     def __str__(self) -> str:
-        return f"Value: {self.value}\nGradient: {self.gradient}\n"
+        verbatim = ""
+        if len(fab_ad_session.dest_tensors) > 1:
+            for idx, tensor in enumerate(fab_ad_session.dest_tensors):
+                if len(fab_ad_session.src_tensors) == 1:
+                    gradient_str = "\n".join([f"Function {idx} Gradient w.r.t {src_tensor.identifier} = {self.gradient[idx]}" for src_tensor_id, src_tensor in enumerate(fab_ad_session.src_tensors)])
+                else:
+                    gradient_str = "\n".join([f"Function {idx} Gradient w.r.t {src_tensor.identifier} = {self.gradient[idx][src_tensor_id]}" for src_tensor_id, src_tensor in enumerate(fab_ad_session.src_tensors)])
+                verbatim += f"Function {idx}: Value: {tensor.value}\n{gradient_str}\n"
+        else:
+            if len(fab_ad_session.src_tensors) == 1:
+                gradient_str = "\n".join(
+                    [f"Gradient w.r.t {src_tensor.identifier} = {self.gradient}" for src_tensor_id, src_tensor in
+                     enumerate(fab_ad_session.src_tensors)])
+            else:
+                gradient_str = "\n".join(
+                    [f"Gradient w.r.t {src_tensor.identifier} = {self.gradient[src_tensor_id]}" for
+                     src_tensor_id, src_tensor in enumerate(fab_ad_session.src_tensors)])
+            verbatim += f"Function 0: Value: {self.value}\n{gradient_str}\n"
+
+        return verbatim
 
 
 def auto_diff(output: Union[Iterable, FabTensor], mode=None) -> AutoDiffOutput:
+    fab_ad_session.dest_tensors = []
     if mode == AdMode.FORWARD:
-        return forward_mode_gradient(output)
+        result = forward_mode_gradient(output)
+        return result
     elif mode == AdMode.REVERSE:
-        return reverse_mode_gradient(output)
+        result = reverse_mode_gradient(output)
+        return result
     elif mode is None:
         n_input_nodes = fab_ad_session.global_tensor_count
         n_output_nodes = len(output) if type(output) is list else 1
-        # TODO: add heuristic for optimal mode
+        # TODO: improve heuristic for to identify mode
         if n_input_nodes > n_output_nodes:
-            return forward_mode_gradient(output)
+            result = forward_mode_gradient(output)
+            return result
         else:
-            return reverse_mode_gradient(output)
+            result = forward_mode_gradient(output)
+            return result
     else:
         raise Exception(f"Invalid AD mode: {mode}!")
 
 
 def forward_mode_gradient(output: Union[Iterable, FabTensor]) -> AutoDiffOutput:
     if isinstance(output, FabTensor):
+        fab_ad_session.dest_tensors.append(output)
         gradient = output.derivative[:fab_ad_session.global_tensor_count + 1]
         if len(gradient) == 1:
             gradient = gradient[0]
         return AutoDiffOutput(
             value=output.value,
-            gradient=gradient
+            gradient=gradient,
         )
     elif isinstance(output, list):
         value = []
         gradient = []
         for tensor in output:
             assert isinstance(tensor, FabTensor)
+            fab_ad_session.dest_tensors.append(tensor)
             _gradient = tensor.derivative[:fab_ad_session.global_tensor_count + 1]
             if len(_gradient) == 1:
                 _gradient = _gradient[0]
             value.append(tensor.value)
             gradient.append(_gradient)
-        print(f"value: {value} gradient: {gradient}")
         return AutoDiffOutput(
             value=np.array(value),
             gradient=np.array(gradient)
@@ -69,8 +94,11 @@ def reverse_mode_gradient_util(tensor, path_value=1):
 
 
 def reverse_mode_gradient(output: Union[Iterable, FabTensor]) -> AutoDiffOutput:
+    for tensor in fab_ad_session.all_tensors:
+        tensor.zero_grad()
     if isinstance(output, FabTensor):
         reverse_mode_gradient_util(output, path_value=1)
+        fab_ad_session.dest_tensors.append(output)
         return AutoDiffOutput(
             value=output.value,
             gradient=np.array([input_tensor.gradient for input_tensor in fab_ad_session.src_tensors]) if len(fab_ad_session.src_tensors) > 1 else fab_ad_session.src_tensors[0].gradient
@@ -79,6 +107,7 @@ def reverse_mode_gradient(output: Union[Iterable, FabTensor]) -> AutoDiffOutput:
         value = []
         gradient = []
         for output_tensor in output:
+            fab_ad_session.dest_tensors.append(output_tensor)
             reverse_mode_gradient_util(output_tensor, path_value=1)
             value.append(output_tensor.value)
             gradient.append(

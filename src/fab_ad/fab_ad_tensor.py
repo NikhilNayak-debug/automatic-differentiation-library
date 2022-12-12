@@ -43,6 +43,7 @@ class FabTensor(object):
         if self.depth == 0:
             # add tensor to list of source nodes in session
             fab_ad_session.src_tensors.append(self)
+        fab_ad_session.all_tensors.append(self)
         if isinstance(derivative, (int, float, numbers.Integral, numbers.Number)):
             derivative = [derivative]
         self.derivative = np.array(derivative)

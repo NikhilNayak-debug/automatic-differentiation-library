@@ -20,7 +20,7 @@ def derivFunc(x):
 
 # Function to find the root
 def newtonRaphson(x):
-    fab_ad_session.clear()
+    fab_ad_session.initialize(num_inputs=3)
     tensor = FabTensor(value=x, identifier="x")
     h = func(tensor) / derivFunc(tensor)
     while True:
@@ -32,7 +32,7 @@ def newtonRaphson(x):
                 break
         # x(i+1) = x(i) - f(x) / f'(x)
         x = x - h
-        fab_ad_session.clear()
+        fab_ad_session.initialize(num_inputs=3)
         tensor = FabTensor(value=x, identifier="x")
         h = func(tensor) / derivFunc(tensor)
 

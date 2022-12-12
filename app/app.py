@@ -32,7 +32,7 @@ from fab_ad.constants import *
 
 
 # scalar input; scalar output; forward ad
-fab_session.clear()
+fab_session.initialize(num_inputs=3)
 x = FabTensor(value=3, identifier="x")
 z = x ** 2 + 2 * x + 1
 print(auto_diff(z, mode=AdMode.FORWARD))
@@ -45,7 +45,7 @@ from fab_ad.fab_admode import auto_diff
 from fab_ad.constants import *
 
 # multiple scalar input; scalar output; forward ad
-fab_session.clear()
+fab_session.initialize(num_inputs=3)
 m = FabTensor(value=-4, identifier="m")
 x = FabTensor(value=3, identifier="x")
 y = FabTensor(value=-4, identifier="y")

@@ -11,6 +11,8 @@ class FabAdSession(object):
         self.max_num_independent_tensors = num_independent_tensors
         self.global_tensor_count = global_tensor_count
         self.src_tensors = []
+        self.dest_tensors = []
+        self.all_tensors = []
 
     def get_index(self) -> int:
         self.global_tensor_count += 1
@@ -33,6 +35,12 @@ class FabAdSession(object):
     def clear(self) -> None:
         self.global_tensor_count = -1
         self.src_tensors = []
+        self.all_tensors = []
+        self.dest_tensors = []
+
+    def initialize(self, num_inputs=_MAX_INDEPENDENT_VARS):
+        self.initialize(num_inputs=3)
+        self.max_num_independent_tensors = num_inputs
 
 
 fab_ad_session = FabAdSession()
