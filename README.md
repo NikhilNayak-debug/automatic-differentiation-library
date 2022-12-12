@@ -51,26 +51,172 @@ Moreover, you could also add other supplementary features as in the code
 demo provided below. You can find this demo file by the name of usage.py 
 under src in the github.
 
-```Python
-from fab_ad import FabTensor
+#### Usage: Forward Mode AD
+
+```python 
+from fab_ad.fab_ad_tensor import FabTensor, AdMode
+from fab_ad.fab_ad_session import fab_ad_session
+from fab_ad.fab_ad_diff import auto_diff
+from fab_ad.constants import *
+
+# multiple scalar input; single scalar output; forward ad
+
+# initialize the fab_ad session with number of input variables. if unsure, set num_inputs to a high number (defaults to 10)
+fab_ad_session.initialize()
+
+# define the input variables
+x = FabTensor(value=3, identifier="x")
+y = FabTensor(value=-4, identifier="y")
+
+# compute the output variable
+z = x ** 2 + 2 * y ** 2
+
+# compute the gradient of the output variable with respect to the input variables
+result = auto_diff(z, mode=AdMode.FORWARD)
+
+assert result.value == 41
+assert all(result.gradient == np.array([6, -16]))
+print(result)
+# Function 0: Value: 41
+# Gradient w.r.t x = 6.0
+# Gradient w.r.t y = -16.0
+```
+
+#### Usage: Reverse Mode AD
+
+```python
+from fab_ad.fab_ad_tensor import FabTensor, AdMode
+from fab_ad.fab_ad_session import fab_ad_session
+from fab_ad.fab_ad_diff import auto_diff
+from fab_ad.constants import *
+
+# Multiple scalar input; scalar output; reverse ad
+# initialize fab_ad session with number of input variables. if unsure, set num_inputs to a high number
+fab_ad_session.initialize()
+# initialize input variables
+x = FabTensor(value=3, identifier="x")
+y = FabTensor(value=-4, identifier="y")
+# compute output variable
+z = x ** 2 + 2 * y ** 2
+# compute gradient of output variable with respect to input variables via reverse mode AD
+result = auto_diff(z, mode=AdMode.REVERSE)
+
+assert result.value == 41
+assert all(result.gradient == np.array([6, -16]))
+print(result)
+# Function 0: Value: 41
+# Gradient w.r.t x = 6.0
+# Gradient w.r.t y = -16.0
+```
+
+#### Usage: Gradient Descent
+
+```python
+from fab_ad.fab_ad_tensor import FabTensor, AdMode
+from fab_ad.fab_ad_session import fab_ad_session
+from fab_ad.fab_ad_diff import auto_diff
+from fab_ad.constants import *
+
+def function_derivative(x: FabTensor, y: FabTensor):
+    # compute output variable
+    z = x**2 + y**4
+    # compute gradient of output variable with respect to input variables
+    return auto_diff(output=z, mode=AdMode.FORWARD).gradient
+
+def gradient_descent(
+    function_derivative, start, learn_rate, n_iter=10000, tolerance=1e-10
+):
+    # initialize the vector
+    vector = start
+    # initialize the fab_ad session with number of input variables. if unsure, set num_inputs to a high number
+    fab_ad_session.initialize()
+    # initialize the input variables
+    x = FabTensor(value=vector[0], identifier="x")
+    y = FabTensor(value=vector[1], identifier="y")
+    for i in range(n_iter):
+        # compute the gradient descent step
+        diff = -learn_rate * function_derivative(x, y)
+        if np.all(np.abs(diff) <= tolerance):
+            break
+        # update the vector
+        vector += diff
+        # update the input variables
+        x += diff[0]
+        y += diff[1]
+        
+        if (i%1000) == 0:
+            print(f"iteration {i}: {vector}")
+    
+    return vector
+
+
+start = np.array([1.0, 1.0])
+print(gradient_descent(function_derivative, start, 0.2, tolerance=1e-08).round(4))
+
+# iteration 0: [0.6 0.2]
+# iteration 1000: [8.49966157e-223 2.47685235e-002]
+# iteration 2000: [4.9406565e-324 1.7593023e-002]
+# iteration 3000: [4.94065646e-324 1.43868515e-002]
+# iteration 4000: [4.94065646e-324 1.24691641e-002]
+# iteration 5000: [4.9406565e-324 1.1158074e-002]
+# iteration 6000: [4.94065646e-324 1.01891453e-002]
+# iteration 7000: [4.94065646e-324 9.43548979e-003]
+# iteration 8000: [4.94065646e-324 8.82762731e-003]
+# iteration 9000: [4.94065646e-324 8.32389824e-003]
+# [0.     0.0079]
+```
+
+#### Usage: Newton-Raphson
+
+```python
+import os
+import sys
 import numpy as np
 
+from fab_ad.constants import *
+from fab_ad.fab_ad_tensor import FabTensor, AdMode
+from fab_ad.fab_ad_session import fab_ad_session
+from fab_ad.fab_ad_diff import auto_diff
 
-if __name__ == "__main__":
-    # value field should be initialized with value of the variable
-    # derivative field should have dimension equal to number of independent input variables i.e [df/dx, df/dy] in this case.
-    x = FabTensor(value=3, derivative=np.array([1, 0]), identifier='x')
-    y = FabTensor(value=-4, derivative=np.array([0, 1]), identifier='y')
-    # the following seed vector gives partial derivative w.r.t y
-    seed_vector = np.array([0, 1])
-    z = x * y
-    print(z)
-    print("gradient: ", z.directional_derivative(seed_vector))
+# Function to find the root
+def newtonRaphson(x):
+    
+    def func(x):
+        # compute output variable and return value
+        z = x * x * x - x * x + 2
+        return auto_diff(output=z, mode=AdMode.FORWARD).value
+    
+    def derivFunc(x):
+        # compute output variable and return gradient
+        z = x * x * x - x * x + 2
+        return auto_diff(output=z, mode=AdMode.FORWARD).gradient
+    
+    # initialize the fab_ad session with number of input variables. if unsure, set num_inputs to a high number
+    fab_ad_session.initialize()
+    tensor = FabTensor(value=x, identifier="x")
+    h = func(tensor) / derivFunc(tensor)
+    while True:
+        if isinstance(h, float):
+            if abs(h) < 0.0001:
+                break
+        else:
+            if max(abs(h)) < 0.0001:
+                break
+        # x(i+1) = x(i) - f(x) / f'(x)
+        x = x - h
+        tensor = tensor - h
+        h = func(tensor) / derivFunc(tensor)
+    print("The value of the root is : ", x)
 
-    x = FabTensor(value=3, derivative=1, identifier='x')
-    y = FabTensor(value=-4, derivative=0, identifier='y')
-    z = x ** 2 + y ** 2
-    print(z)
+
+# Driver program to test above
+x0 = -20.00 # Initial values assumed
+newtonRaphson(x0)
+# The value of the root is :  -1.0000001181322415
+
+x0 = [-10.00, 10.00] # Initial values assumed
+newtonRaphson(x0)
+# The value of the root is :  [-1.         -1.00000001]
 ```
 
 # Documentation
