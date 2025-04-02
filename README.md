@@ -13,7 +13,16 @@ Currently, there are three ways to compute derivatives - finite, symbolic, autom
 
 Automatic Differentiation leverages symbolic rules for evaluating gradients - which is more accurate than using finite difference approximations. But unlike a purely symbolic process, the evaluation of expressions takes place early in the computation - it evaluates derivatives at particular numeric values.  
 
-The package `fab-ad` implements automatic differentiation for computational use. `fab-ad` can be used to automatically differentiate functions via forward mode. Automatic Differentiation finds applications in optimization, machine learning, and numerical methods.  
+The package `fab-ad` implements automatic differentiation for computational use. `fab-ad` can be used to automatically differentiate functions via forward mode. Automatic Differentiation finds applications in optimization, machine learning, and numerical methods.
+
+## Features
+
+- Forward and Reverse Mode Automatic Differentiation
+- Gradient Descent and Newton-Raphson Solver Examples
+- Vectorized Gradients for Multi-variable Functions
+- Modular `FabTensor` design
+- Sphinx-based documentation with CI/CD integration
+- Live Streamlit demo: [fab-ad.streamlit.app](https://fab-ad.streamlit.app/)
 
 # Installation
 Our package is for Python 3 only. You can access our package by cloning 
